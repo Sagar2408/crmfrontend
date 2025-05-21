@@ -1,7 +1,7 @@
 const API_BASE_URL = "https://crm-backend-production-c208.up.railway.app/api";
 const BASE_HEADERS = {
   "Content-Type": "application/json",
-  "x-company-id": "549403a0-8e59-440f-a381-17ae457c60c4",
+  "x-company-id": "ab-cd",
 };
 
 /*------------------------------LOGIN---------------------------*/
