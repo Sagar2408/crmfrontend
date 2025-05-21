@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://crmbackend-yho0.onrender.com.app/api";
+const API_BASE_URL = "https://crmbackend-yho0.onrender.com/api";
 const BASE_HEADERS = {
   "Content-Type": "application/json",
   "x-company-id": "ab-cd",

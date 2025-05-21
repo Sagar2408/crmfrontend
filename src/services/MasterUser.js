@@ -3,7 +3,7 @@ import axios from "axios";
 
 // ✅ Create Axios instance specific to master user authentication
 const authApi = axios.create({
-  baseURL: "https://crmbackend-yho0.onrender.com.app/api", // Replace with env var in production
+  baseURL: "https://crmbackend-yho0.onrender.com/api", // Replace with env var in production
   headers: {
     "Content-Type": "application/json",
   },

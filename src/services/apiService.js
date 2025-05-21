@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_BASE_URL = "https://crmbackend-yho0.onrender.com.app/api";
+const API_BASE_URL = "https://crmbackend-yho0.onrender.com/api";
 
 const apiService = axios.create({
   baseURL: API_BASE_URL,
