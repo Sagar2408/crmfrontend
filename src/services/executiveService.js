@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://crm-backend-production-c208.up.railway.app/api';
+const API_BASE_URL = https://crmbackend-yho0.onrender.com.app/api';
 
 // Get token from localStorage
 const getToken = () => localStorage.getItem('token');
@@ -9,7 +9,7 @@ const getToken = () => localStorage.getItem('token');
 const getHeaders = () => ({
   'Content-Type': 'application/json',
   'Authorization': `Bearer ${getToken()}`,
-  'x-company-id': '549403a0-8e59-440f-a381-17ae457c60c4', // ⬅️ Hardcoded company ID
+  'x-company-id': 'ab-cd', // ⬅️ Hardcoded company ID
 });
 
 /**
