@@ -2,8 +2,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
-// ✅ Point to your Flask backend
-const socket = io("https://monitoring-w28p.onrender.com"); 
+// ✅ Flask backend Socket.IO server
+const socket = io("https://monitoring-w28p.onrender.com");
 
 const StreamPlayer = ({ executiveId, executiveName, type }) => {
   const [imageSrc, setImageSrc] = useState("");
@@ -23,21 +23,22 @@ const StreamPlayer = ({ executiveId, executiveName, type }) => {
     };
 
     const handleVideoData = (data) => {
-  if (matchExec(data) && videoRef.current) {
-    try {
-      const binary = atob(data.buffer); // base64 decode
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
+      if (matchExec(data) && videoRef.current) {
+        try {
+          const byteCharacters = atob(data.buffer); // base64 decode
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'image/jpeg' }); // camera image is JPEG
+          videoRef.current.src = URL.createObjectURL(blob);
+          videoRef.current.play();
+        } catch (err) {
+          console.error("❌ Error decoding video-data:", err);
+        }
       }
-      const blob = new Blob([bytes], { type: 'video/webm' }); // or 'image/jpeg' if still .jpg
-      videoRef.current.src = URL.createObjectURL(blob);
-      videoRef.current.play();
-    } catch (e) {
-      console.error("Failed to decode video buffer:", e);
-    }
-  }
-};
+    };
 
     const handleAudioData = (data) => {
       if (matchExec(data) && audioRef.current) {
@@ -47,14 +48,14 @@ const StreamPlayer = ({ executiveId, executiveName, type }) => {
       }
     };
 
-    socket.on('screen-data', handleScreenData);
-    socket.on('video-data', handleVideoData);
-    socket.on('audio-data', handleAudioData);
+    socket.on("screen-data", handleScreenData);
+    socket.on("video-data", handleVideoData);
+    socket.on("audio-data", handleAudioData);
 
     return () => {
-      socket.off('screen-data', handleScreenData);
-      socket.off('video-data', handleVideoData);
-      socket.off('audio-data', handleAudioData);
+      socket.off("screen-data", handleScreenData);
+      socket.off("video-data", handleVideoData);
+      socket.off("audio-data", handleAudioData);
     };
   }, [executiveId, executiveName, type]);
 
@@ -71,7 +72,7 @@ const StreamPlayer = ({ executiveId, executiveName, type }) => {
     return (
       <div>
         <h3>Video Stream</h3>
-        <video ref={videoRef} width="100%" autoPlay controls />
+        <video ref={videoRef} width="100%" autoPlay muted playsInline />
       </div>
     );
   }
