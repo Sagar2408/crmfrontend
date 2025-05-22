@@ -15,6 +15,7 @@ function Monitoring() {
 
   const { fetchExecutivesAPI } = useApi();
 
+  // Fetch executives list
   const fetchExecutives = async () => {
     try {
       const data = await fetchExecutivesAPI();
@@ -27,6 +28,24 @@ function Monitoring() {
   useEffect(() => {
     fetchExecutives();
   }, []);
+
+  // Trigger stream via Flask backend
+  const triggerStream = async (executiveId, stream) => {
+    try {
+      const res = await fetch("https://monitoring-w28p.onrender.com/trigger-stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ executive_id: executiveId, stream })
+      });
+
+      const data = await res.json();
+      console.log(`✅ Triggered ${stream} for Exec ${executiveId}:`, data);
+    } catch (error) {
+      console.error("❌ Failed to trigger stream:", error);
+    }
+  };
 
   return (
     <>
@@ -44,28 +63,42 @@ function Monitoring() {
                   </div>
                 </div>
                 <div className="media-toggle-attached">
-                  <button className="toggle-btn" title="View Screen"
+                  <button
+                    className="toggle-btn"
+                    title="View Screen"
                     onClick={() => {
                       setSelectedExecutiveId(e.id);
-                      setSelectedExecutiveName(e.username); // ✅
+                      setSelectedExecutiveName(e.username);
                       setStreamType("screen");
-                    }}>
+                      triggerStream(e.id, "screen");
+                    }}
+                  >
                     <FontAwesomeIcon icon={faDesktop} />
                   </button>
-                  <button className="toggle-btn" title="View Video"
+
+                  <button
+                    className="toggle-btn"
+                    title="View Video"
                     onClick={() => {
                       setSelectedExecutiveId(e.id);
-                      setSelectedExecutiveName(e.username); // ✅
+                      setSelectedExecutiveName(e.username);
                       setStreamType("video");
-                    }}>
+                      triggerStream(e.id, "video");
+                    }}
+                  >
                     <FontAwesomeIcon icon={faVideo} />
                   </button>
-                  <button className="toggle-btn" title="Listen Audio"
+
+                  <button
+                    className="toggle-btn"
+                    title="Listen Audio"
                     onClick={() => {
                       setSelectedExecutiveId(e.id);
-                      setSelectedExecutiveName(e.username); // ✅
+                      setSelectedExecutiveName(e.username);
                       setStreamType("audio");
-                    }}>
+                      triggerStream(e.id, "audio");
+                    }}
+                  >
                     <FontAwesomeIcon icon={faMicrophone} />
                   </button>
                 </div>
@@ -74,7 +107,7 @@ function Monitoring() {
           ))}
         </div>
 
-        {/* Stream View */}
+        {/* Stream Player */}
         {selectedExecutiveId && streamType && (
           <div style={{ marginTop: "30px", padding: "20px" }}>
             <h2 style={{ textAlign: "center" }}>{streamType.toUpperCase()} Stream</h2>
