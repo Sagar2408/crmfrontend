@@ -23,12 +23,21 @@ const StreamPlayer = ({ executiveId, executiveName, type }) => {
     };
 
     const handleVideoData = (data) => {
-      if (matchExec(data) && videoRef.current) {
-        const blob = new Blob([data.buffer], { type: 'video/webm' });
-        videoRef.current.src = URL.createObjectURL(blob);
-        videoRef.current.play();
+  if (matchExec(data) && videoRef.current) {
+    try {
+      const binary = atob(data.buffer); // base64 decode
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
       }
-    };
+      const blob = new Blob([bytes], { type: 'video/webm' }); // or 'image/jpeg' if still .jpg
+      videoRef.current.src = URL.createObjectURL(blob);
+      videoRef.current.play();
+    } catch (e) {
+      console.error("Failed to decode video buffer:", e);
+    }
+  }
+};
 
     const handleAudioData = (data) => {
       if (matchExec(data) && audioRef.current) {
