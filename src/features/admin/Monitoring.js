@@ -5,7 +5,7 @@ import {
   faMicrophone, faVideo, faDesktop,
 } from "@fortawesome/free-solid-svg-icons";
 import SidebarToggle from "./SidebarToggle";
-import StreamPlayer from "./StreamPlayer";
+import StreamPlayer from "../../pages/StreamPlayer";
 
 function Monitoring() {
   const [executives, setExecutives] = useState([]);
