@@ -2,24 +2,28 @@
 import React, { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
-const socket = io("https://crmbackend-yho0.onrender.com"); // ✅ Update if .env used
+// ✅ Point to your Flask backend
+const socket = io("https://monitoring-w28p.onrender.com"); 
 
-const StreamPlayer = ({ executiveId, type }) => {
+const StreamPlayer = ({ executiveId, executiveName, type }) => {
   const [imageSrc, setImageSrc] = useState("");
   const videoRef = useRef(null);
   const audioRef = useRef(null);
 
   useEffect(() => {
-    if (!executiveId || !type) return;
+    if (!executiveId || !executiveName || !type) return;
+
+    const matchExec = (data) =>
+      data.executiveId === executiveId || data.executiveName === executiveName;
 
     const handleScreenData = (data) => {
-      if (data.executiveId === executiveId) {
+      if (matchExec(data)) {
         setImageSrc(`data:image/jpeg;base64,${data.image}`);
       }
     };
 
     const handleVideoData = (data) => {
-      if (data.executiveId === executiveId && videoRef.current) {
+      if (matchExec(data) && videoRef.current) {
         const blob = new Blob([data.buffer], { type: 'video/webm' });
         videoRef.current.src = URL.createObjectURL(blob);
         videoRef.current.play();
@@ -27,7 +31,7 @@ const StreamPlayer = ({ executiveId, type }) => {
     };
 
     const handleAudioData = (data) => {
-      if (data.executiveId === executiveId && audioRef.current) {
+      if (matchExec(data) && audioRef.current) {
         const blob = new Blob([data.buffer], { type: 'audio/wav' });
         audioRef.current.src = URL.createObjectURL(blob);
         audioRef.current.play();
@@ -43,7 +47,7 @@ const StreamPlayer = ({ executiveId, type }) => {
       socket.off('video-data', handleVideoData);
       socket.off('audio-data', handleAudioData);
     };
-  }, [executiveId, type]);
+  }, [executiveId, executiveName, type]);
 
   if (type === "screen") {
     return (

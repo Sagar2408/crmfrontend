@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useApi } from '../../context/ApiContext'; // ✅ Using Context API
+import { useApi } from '../../context/ApiContext';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faMicrophone, faVideo, faDesktop,
 } from "@fortawesome/free-solid-svg-icons";
-import SidebarToggle from "./SidebarToggle";// ✅
+import SidebarToggle from "./SidebarToggle";
 import StreamPlayer from "./StreamPlayer";
+
 function Monitoring() {
   const [executives, setExecutives] = useState([]);
   const [selectedExecutiveId, setSelectedExecutiveId] = useState(null);
+  const [selectedExecutiveName, setSelectedExecutiveName] = useState(null);
   const [streamType, setStreamType] = useState(null);
 
   const { fetchExecutivesAPI } = useApi();
@@ -45,6 +47,7 @@ function Monitoring() {
                   <button className="toggle-btn" title="View Screen"
                     onClick={() => {
                       setSelectedExecutiveId(e.id);
+                      setSelectedExecutiveName(e.username); // ✅
                       setStreamType("screen");
                     }}>
                     <FontAwesomeIcon icon={faDesktop} />
@@ -52,6 +55,7 @@ function Monitoring() {
                   <button className="toggle-btn" title="View Video"
                     onClick={() => {
                       setSelectedExecutiveId(e.id);
+                      setSelectedExecutiveName(e.username); // ✅
                       setStreamType("video");
                     }}>
                     <FontAwesomeIcon icon={faVideo} />
@@ -59,6 +63,7 @@ function Monitoring() {
                   <button className="toggle-btn" title="Listen Audio"
                     onClick={() => {
                       setSelectedExecutiveId(e.id);
+                      setSelectedExecutiveName(e.username); // ✅
                       setStreamType("audio");
                     }}>
                     <FontAwesomeIcon icon={faMicrophone} />
@@ -73,7 +78,11 @@ function Monitoring() {
         {selectedExecutiveId && streamType && (
           <div style={{ marginTop: "30px", padding: "20px" }}>
             <h2 style={{ textAlign: "center" }}>{streamType.toUpperCase()} Stream</h2>
-            <StreamPlayer executiveId={selectedExecutiveId} type={streamType} />
+            <StreamPlayer
+              executiveId={selectedExecutiveId}
+              executiveName={selectedExecutiveName}
+              type={streamType}
+            />
           </div>
         )}
       </div>
