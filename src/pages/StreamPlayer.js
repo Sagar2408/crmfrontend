@@ -1,4 +1,4 @@
-// src/pages/StreamPlayer.js
+// ✅ Updated StreamPlayer.js
 import React, { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
@@ -45,34 +45,21 @@ const StreamPlayer = ({ executiveId, executiveName, type }) => {
     };
   }, [executiveId, executiveName, type]);
 
-  if (type === "screen") {
-    return (
-      <div>
-        <h3>Screen Stream</h3>
-        <img src={imageSrc} alt="Executive Screen" width="100%" />
-      </div>
-    );
-  }
-
-  if (type === "video") {
-    return (
-      <div>
-        <h3>Video Stream</h3>
-        <img src={imageSrc} alt="Executive Webcam" width="100%" />
+  if (type === "screen" || type === "video") {
+    return imageSrc ? (
+      <img src={imageSrc} alt={`${type} stream`} width="100%" style={{ borderRadius: "8px" }} />
+    ) : (
+      <div style={{ textAlign: "center", color: "white" }}>
+        Waiting for {type} stream...
       </div>
     );
   }
 
   if (type === "audio") {
-    return (
-      <div>
-        <h3>Audio Stream</h3>
-        <audio ref={audioRef} controls autoPlay />
-      </div>
-    );
+    return <audio ref={audioRef} controls autoPlay />;
   }
 
-  return <p>Select a stream type</p>;
+  return <p>Invalid stream type</p>;
 };
 
 export default StreamPlayer;

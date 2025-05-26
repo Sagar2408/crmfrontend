@@ -1,14 +1,14 @@
+// ✅ Updated Monitoring.jsx
 import React, { useState, useEffect } from "react";
 import { useApi } from "../../context/ApiContext";
 import SidebarToggle from "./SidebarToggle";
 import StreamPlayer from "../../pages/StreamPlayer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDesktop, faVideo, faVolumeUp } from "@fortawesome/free-solid-svg-icons";
+import { faDesktop, faVideo, faVolumeUp, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
 
 function Monitoring() {
   const [executives, setExecutives] = useState([]);
   const [selectedExec, setSelectedExec] = useState(null);
-
   const [showScreen, setShowScreen] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [showAudio, setShowAudio] = useState(false);
@@ -21,10 +21,8 @@ function Monitoring() {
 
   const selectedExecutive = executives.find(e => e.username === selectedExec);
 
-  // ✅ Trigger backend to start stream via REST
   const triggerStream = async (type) => {
     if (!selectedExecutive) return;
-
     try {
       const res = await fetch("https://monitoring-w28p.onrender.com/trigger-stream", {
         method: "POST",
@@ -34,30 +32,29 @@ function Monitoring() {
           stream_type: type
         })
       });
-
       const result = await res.json();
       if (result.status === "triggered") {
-        console.log(`✅ Triggered ${type} for ${selectedExecutive.username}`);
         if (type === "screen") setShowScreen(true);
         if (type === "video") setShowVideo(true);
         if (type === "audio") setShowAudio(true);
-      } else {
-        console.warn("⚠️ Trigger failed");
       }
     } catch (err) {
-      console.error("❌ Error triggering stream:", err);
+      console.error("Trigger error:", err);
     }
+  };
+
+  const stopStream = (type) => {
+    if (type === "screen") setShowScreen(false);
+    if (type === "video") setShowVideo(false);
+    if (type === "audio") setShowAudio(false);
   };
 
   return (
     <>
       <SidebarToggle />
       <div>
-        <h1 style={{ textAlign: "center", marginTop: "20px" }}>
-          Choose Executives
-        </h1>
+        <h1 style={{ textAlign: "center", marginTop: "20px" }}>Choose Executives</h1>
 
-        {/* Dropdown */}
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <select
             onChange={(e) => {
@@ -66,12 +63,7 @@ function Monitoring() {
               setShowVideo(false);
               setShowAudio(false);
             }}
-            style={{
-              padding: "10px",
-              fontSize: "16px",
-              borderRadius: "8px",
-              minWidth: "200px",
-            }}
+            style={{ padding: "10px", fontSize: "16px", borderRadius: "8px", minWidth: "200px" }}
           >
             <option value="all">All Executives</option>
             {executives.map((e, i) => (
@@ -80,7 +72,6 @@ function Monitoring() {
           </select>
         </div>
 
-        {/* 👥 All executives view */}
         {!selectedExec && (
           <div className="exec-grid">
             {executives.map((e, i) => (
@@ -98,7 +89,6 @@ function Monitoring() {
           </div>
         )}
 
-        {/* 🧑‍💻 Selected executive view */}
         {selectedExec && selectedExecutive && (
           <>
             <div className="stream-section">
@@ -106,20 +96,14 @@ function Monitoring() {
               <div className="exec-box-wrapper">
                 <div className="exec-box">
                   {showScreen ? (
-                    <StreamPlayer
-                      executiveId={selectedExecutive.id}
-                      executiveName={selectedExecutive.username}
-                      type="screen"
-                    />
+                    <>
+                      <StreamPlayer executiveId={selectedExecutive.id} executiveName={selectedExecutive.username} type="screen" />
+                      <FontAwesomeIcon icon={faTimesCircle} size="lg" onClick={() => stopStream("screen")} style={{ cursor: "pointer", marginTop: "10px" }} />
+                    </>
                   ) : (
                     <div style={{ textAlign: "center" }}>
                       <p>Start Screen Cast</p>
-                      <FontAwesomeIcon
-                        icon={faDesktop}
-                        size="2x"
-                        style={{ cursor: "pointer", marginTop: "10px" }}
-                        onClick={() => triggerStream("screen")}
-                      />
+                      <FontAwesomeIcon icon={faDesktop} size="2x" onClick={() => triggerStream("screen")} style={{ cursor: "pointer" }} />
                     </div>
                   )}
                 </div>
@@ -129,43 +113,31 @@ function Monitoring() {
               <div className="exec-box-wrapper">
                 <div className="exec-box">
                   {showVideo ? (
-                    <StreamPlayer
-                      executiveId={selectedExecutive.id}
-                      executiveName={selectedExecutive.username}
-                      type="video"
-                    />
+                    <>
+                      <StreamPlayer executiveId={selectedExecutive.id} executiveName={selectedExecutive.username} type="video" />
+                      <FontAwesomeIcon icon={faTimesCircle} size="lg" onClick={() => stopStream("video")} style={{ cursor: "pointer", marginTop: "10px" }} />
+                    </>
                   ) : (
                     <div style={{ textAlign: "center" }}>
                       <p>Start Webcam</p>
-                      <FontAwesomeIcon
-                        icon={faVideo}
-                        size="2x"
-                        style={{ cursor: "pointer", marginTop: "10px" }}
-                        onClick={() => triggerStream("video")}
-                      />
+                      <FontAwesomeIcon icon={faVideo} size="2x" onClick={() => triggerStream("video")} style={{ cursor: "pointer" }} />
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Audio Panel */}
+            {/* Audio Stream */}
             <div className="audio-test-bar">
               {showAudio ? (
-                <StreamPlayer
-                  executiveId={selectedExecutive.id}
-                  executiveName={selectedExecutive.username}
-                  type="audio"
-                />
+                <>
+                  <StreamPlayer executiveId={selectedExecutive.id} executiveName={selectedExecutive.username} type="audio" />
+                  <FontAwesomeIcon icon={faTimesCircle} size="lg" onClick={() => stopStream("audio")} style={{ cursor: "pointer", marginLeft: "15px" }} />
+                </>
               ) : (
                 <div style={{ textAlign: "center" }}>
                   <p>Start Audio Stream</p>
-                  <FontAwesomeIcon
-                    icon={faVolumeUp}
-                    size="2x"
-                    style={{ cursor: "pointer", marginTop: "10px" }}
-                    onClick={() => triggerStream("audio")}
-                  />
+                  <FontAwesomeIcon icon={faVolumeUp} size="2x" onClick={() => triggerStream("audio")} style={{ cursor: "pointer" }} />
                 </div>
               )}
             </div>
