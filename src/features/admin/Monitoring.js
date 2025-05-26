@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useApi } from "../../context/ApiContext";
 import SidebarToggle from "./SidebarToggle";
-import StreamPlayer from "../pages/StreamPlayer"; // ⬅ Make sure path is correct
+import StreamPlayer from "../../pages/StreamPlayer"; // ✅ Corrected path
 
 function Monitoring() {
   const [executives, setExecutives] = useState([]);
