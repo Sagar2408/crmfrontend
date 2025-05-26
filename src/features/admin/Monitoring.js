@@ -1,44 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { useApi } from "../../context/ApiContext";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faMicrophone,
-  faMicrophoneSlash,
-  faVideo,
-  faVideoSlash,
-} from "@fortawesome/free-solid-svg-icons";
 import SidebarToggle from "./SidebarToggle";
+import StreamPlayer from "../pages/StreamPlayer"; // ⬅ Make sure path is correct
 
 function Monitoring() {
-  const [audioStatus, setAudioStatus] = useState({});
-  const [videoStatus, setVideoStatus] = useState({});
   const [executives, setExecutives] = useState([]);
   const [selectedExec, setSelectedExec] = useState(null);
 
   const { fetchExecutivesAPI } = useApi();
 
-  const fetchExecutives = async () => {
-    try {
-      const data = await fetchExecutivesAPI();
-      setExecutives(data);
-    } catch (error) {
-      console.error("❌ Failed to load executives:", error);
-    }
-  };
-
   useEffect(() => {
+    const fetchExecutives = async () => {
+      try {
+        const data = await fetchExecutivesAPI();
+        setExecutives(data);
+      } catch (error) {
+        console.error("❌ Failed to load executives:", error);
+      }
+    };
     fetchExecutives();
   }, []);
 
-  const toggleAudio = (id) => {
-    setAudioStatus((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const toggleVideo = (id) => {
-    setVideoStatus((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const selectedExecutive = executives.find((e) => e.username === selectedExec);
+  const selectedExecutive = executives.find(
+    (e) => e.username === selectedExec
+  );
 
   return (
     <>
@@ -70,75 +55,40 @@ function Monitoring() {
           </select>
         </div>
 
-        <div className="exec-grid">
-          {selectedExec && selectedExecutive ? (
-            // <>
-            //   {[1, 2].map((boxNum) => (
-            //     <div
-            //       key={boxNum}
-            //       className="exec-item large-box" // 👈 apply extra class
-            //     >
-
-            //       <div className="exec-box-wrapper large-wrapper">
-            //         {" "}
-            //         {/* 👈 extra class */}
-            //         <div className="exec-box large-box-body">
-            //           {" "}
-            //           {/* 👈 extra class */}
-            //           <div className="exe-avatar">
-            //             {selectedExecutive.username.charAt(0).toUpperCase()}
-            //           </div>
-            //         </div>
-            //         <div className="media-toggle-attached">
-
-            //           <div>Press to Start SC</div>
-            //         </div>
-            //       </div>
-            //     </div>
-            //   ))}
-            // </>
-            <>
-              {/* Box 1: Screen Cast */}
-              <div className="exec-item large-box">
-                <div className="exec-box-wrapper large-wrapper">
-                  <div className="exec-box large-box-body">
-                    <div className="exe-avatar">
-                      {selectedExecutive.username.charAt(0).toUpperCase()}
-                    </div>                    
-                  </div>
-                  <div className="media-toggle-attached">
-                    <div
-                      className="clickable-action"
-                      onClick={() => alert("Starting Screen Cast...")}
-                    >
-                      Press to start Screen Cast
-                    </div>
-                  </div>
-                </div>
+        {/* Selected Executive Stream View */}
+        {selectedExec && selectedExecutive ? (
+          <div className="stream-section">
+            <div className="exec-box-wrapper">
+              <div className="exec-box">
+                <StreamPlayer
+                  executiveId={selectedExecutive.id}
+                  executiveName={selectedExecutive.username}
+                  type="screen"
+                />
               </div>
+            </div>
 
-              {/* Box 2: Video */}
-              <div className="exec-item large-box">
-                <div className="exec-box-wrapper large-wrapper">
-                  <div className="exec-box large-box-body">
-                    <div className="exe-avatar">
-                      {selectedExecutive.username.charAt(0).toUpperCase()}
-                    </div>                    
-                  </div>
-                  <div className="media-toggle-attached">
-                    <div
-                      className="clickable-action"
-                      onClick={() => alert("Starting Screen Cast...")}
-                    >
-                      Press to start Vedio
-                    </div>
-                  </div>
-                </div>
+            <div className="exec-box-wrapper">
+              <div className="exec-box">
+                <StreamPlayer
+                  executiveId={selectedExecutive.id}
+                  executiveName={selectedExecutive.username}
+                  type="video"
+                />
               </div>
-            </>
-          ) : (
-            // 👇 normal map loop stays unchanged
-            executives.map((e, i) => (
+            </div>
+
+            <div className="audio-test-bar">
+              <StreamPlayer
+                executiveId={selectedExecutive.id}
+                executiveName={selectedExecutive.username}
+                type="audio"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="exec-grid">
+            {executives.map((e, i) => (
               <div className="exec-item" key={i}>
                 <p className="exec-name">{e.username}</p>
                 <div className="exec-box-wrapper">
@@ -148,36 +98,17 @@ function Monitoring() {
                     </div>
                   </div>
                   <div className="media-toggle-attached">
-                    <div
-                      className="toggle-btn"
-                      onClick={() => toggleAudio(e.id)}
-                    >
-                      <FontAwesomeIcon
-                        icon={
-                          audioStatus[e.id] ? faMicrophone : faMicrophoneSlash
-                        }
-                        size="sm"
-                      />
+                    <div className="toggle-btn">
+                      🎤
                     </div>
-                    <div
-                      className="toggle-btn"
-                      onClick={() => toggleVideo(e.id)}
-                    >
-                      <FontAwesomeIcon
-                        icon={videoStatus[e.id] ? faVideo : faVideoSlash}
-                        size="sm"
-                      />
+                    <div className="toggle-btn">
+                      🎥
                     </div>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-
-        {/* Audio Bar only when one executive is selected */}
-        {selectedExec && (
-          <div className="audio-test-bar">🔊 Audio Test Panel</div>
+            ))}
+          </div>
         )}
       </div>
     </>

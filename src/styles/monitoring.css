@@ -206,3 +206,32 @@ body.sidebar-collapsed .exec-grid {
     font-size: 40px;
   }
 }
+.stream-section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+  padding: 20px;
+}
+
+.audio-test-bar {
+  width: 100%;
+  margin-top: 30px;
+  text-align: center;
+  padding: 15px;
+  background-color: var(--toggle-area-bg);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px var(--exec-shadow);
+  color: var(--exec-text);
+}
+
+.stream-section .exec-box-wrapper {
+  max-width: 600px;
+  width: 100%;
+}
+
+.stream-section img {
+  border-radius: 10px;
+  object-fit: cover;
+  max-height: 300px;
+}
