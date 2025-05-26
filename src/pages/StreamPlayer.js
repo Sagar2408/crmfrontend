@@ -1,5 +1,4 @@
 // ✅ Final FIXED StreamPlayer.js
-default
 import React, { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
