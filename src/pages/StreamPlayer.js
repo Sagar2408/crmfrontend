@@ -1,11 +1,13 @@
-// ✅ Updated StreamPlayer.js
+// ✅ Final FIXED StreamPlayer.js
+default
 import React, { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 
 const socket = io("https://monitoring-w28p.onrender.com");
 
 const StreamPlayer = ({ executiveId, executiveName, type }) => {
-  const [imageSrc, setImageSrc] = useState("");
+  const [screenImage, setScreenImage] = useState("");
+  const [videoImage, setVideoImage] = useState("");
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -16,13 +18,13 @@ const StreamPlayer = ({ executiveId, executiveName, type }) => {
 
     const handleScreenData = (data) => {
       if (matchExec(data)) {
-        setImageSrc(`data:image/jpeg;base64,${data.image}`);
+        setScreenImage(`data:image/jpeg;base64,${data.image}`);
       }
     };
 
     const handleVideoData = (data) => {
       if (matchExec(data)) {
-        setImageSrc(`data:image/jpeg;base64,${data.buffer}`);
+        setVideoImage(`data:image/jpeg;base64,${data.buffer}`);
       }
     };
 
@@ -45,13 +47,19 @@ const StreamPlayer = ({ executiveId, executiveName, type }) => {
     };
   }, [executiveId, executiveName, type]);
 
-  if (type === "screen" || type === "video") {
-    return imageSrc ? (
-      <img src={imageSrc} alt={`${type} stream`} width="100%" style={{ borderRadius: "8px" }} />
+  if (type === "screen") {
+    return screenImage ? (
+      <img src={screenImage} alt="screen stream" width="100%" style={{ borderRadius: "8px" }} />
     ) : (
-      <div style={{ textAlign: "center", color: "white" }}>
-        Waiting for {type} stream...
-      </div>
+      <div style={{ textAlign: "center", color: "white" }}>Waiting for screen stream...</div>
+    );
+  }
+
+  if (type === "video") {
+    return videoImage ? (
+      <img src={videoImage} alt="video stream" width="100%" style={{ borderRadius: "8px" }} />
+    ) : (
+      <div style={{ textAlign: "center", color: "white" }}>Waiting for video stream...</div>
     );
   }
 
