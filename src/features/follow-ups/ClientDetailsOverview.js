@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocation, useParams,useNavigate } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { useApi } from "../../context/ApiContext";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
@@ -25,6 +25,7 @@ const ClientDetailsOverview = () => {
   const [interactionRating, setInteractionRating] = useState("");
   const [reasonDesc, setReasonDesc] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [speechError, setSpeechError] = useState(null); // For handling speech recognition errors
   const [interactionDate, setInteractionDate] = useState("");
   const now = new Date();
   const defaultTime = now.toLocaleTimeString([], {
@@ -33,7 +34,7 @@ const ClientDetailsOverview = () => {
     hour12: true,
   });
   const [interactionTime, setInteractionTime] = useState(defaultTime);
-   const [histories, setHistories] = useState([]);
+  const [histories, setHistories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const recognitionRef = useRef(null);
@@ -52,6 +53,53 @@ const ClientDetailsOverview = () => {
     { key: "assignDate", label: "Assign Date" },
   ];
   
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true; // Continuous listening
+      recognitionRef.current.interimResults = true; // Show interim results
+      recognitionRef.current.lang = 'en-US'; // Set language to English
+
+      recognitionRef.current.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        setReasonDesc((prev) => prev + finalTranscript);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        setSpeechError(`Speech recognition error: ${event.error}`);
+        setIsListening(false);
+        console.error("Speech recognition error:", event.error);
+      };
+
+      recognitionRef.current.onend = () => {
+        if (isListeningRef.current) {
+          recognitionRef.current.start(); // Restart if still listening
+        }
+      };
+    } else {
+      setSpeechError("Speech recognition is not supported in this browser.");
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (client) {
       const freshLeadId = client.freshLead && client.freshLead.id 
@@ -65,12 +113,10 @@ const ClientDetailsOverview = () => {
       };
       setClientInfo(normalizedClient);
       
-      // Fetch follow-up histories when client info is set
       loadFollowUpHistories(freshLeadId);
     }
   }, [client]);
   
-  // Function to fetch follow-up histories
   const loadFollowUpHistories = async (freshLeadId) => {
     if (!freshLeadId) return;
     
@@ -82,9 +128,8 @@ const ClientDetailsOverview = () => {
       if (response && Array.isArray(response)) {
         setHistories(response);
         
-        // If we have histories, populate the form with the latest one
         if (response.length > 0) {
-          const latestHistory = response[0]; // Assuming the API returns the latest first
+          const latestHistory = response[0];
           populateFormWithHistory(latestHistory);
         }
       }
@@ -95,25 +140,19 @@ const ClientDetailsOverview = () => {
     }
   };
   
-  // Helper function to populate form fields with history data
   const populateFormWithHistory = (history) => {
     if (!history) return;
     
-    // Convert contact method to lowercase for checkbox matching
     const method = history.connect_via ? history.connect_via.toLowerCase() : "";
     setContactMethod(method);
     
-    // Set follow-up type (handle hyphenated values)
     setFollowUpType(history.follow_up_type || "");
     
-    // Convert interaction rating to lowercase for checkbox matching
     const rating = history.interaction_rating ? history.interaction_rating.toLowerCase() : "";
     setInteractionRating(rating);
     
-    // Set description
     setReasonDesc(history.reason_for_follow_up || "");
     
-    // Set date and time
     setInteractionDate(history.follow_up_date || "");
     setInteractionTime(history.follow_up_time || "");
   };
@@ -139,7 +178,7 @@ const ClientDetailsOverview = () => {
       reason_for_follow_up: reasonDesc,
       follow_up_date: interactionDate,
       follow_up_time: convertTo24HrFormat(interactionTime),
-      fresh_lead_id: clientInfo.fresh_lead_id || clientInfo.freshLeadId || clientInfo.leadId || clientInfo.id, // Ensure fresh_lead_id is included
+      fresh_lead_id: clientInfo.fresh_lead_id || clientInfo.freshLeadId || clientInfo.leadId || clientInfo.id,
     };
   
     const followUpId = clientInfo.followUpId || clientInfo.id;
@@ -194,7 +233,6 @@ const ClientDetailsOverview = () => {
         const closeLeadPayload = { fresh_lead_id: clientInfo.fresh_lead_id };
         const response = await createCloseLeadAPI(closeLeadPayload); 
         alert("Close lead created successfully!");
-        // Refresh histories after creating close lead
         loadFollowUpHistories(clientInfo.fresh_lead_id);
         setTimeout(() => {
           navigate('/follow-up');
@@ -207,9 +245,22 @@ const ClientDetailsOverview = () => {
   };  
 
   const toggleListening = () => {
-    if (!recognitionRef.current) return alert("Speech recognition not supported");
-    isListening ? stopListening() : recognitionRef.current.start();
-    setIsListening(!isListening);
+    if (!recognitionRef.current) {
+      alert("Speech recognition is not supported in this browser. Please use a supported browser like Google Chrome.");
+      return;
+    }
+    setSpeechError(null); // Clear any previous errors
+    if (isListening) {
+      stopListening();
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        setSpeechError("Failed to start speech recognition. Please try again.");
+        console.error("Error starting speech recognition:", error);
+      }
+    }
   };
 
   const stopListening = () => {
@@ -368,6 +419,9 @@ const ClientDetailsOverview = () => {
                   {isListening ? "⏹" : "🎤"}
                 </button>
               </div>
+              {speechError && (
+                <p style={{ color: "red", marginTop: "5px" }}>{speechError}</p>
+              )}
 
               <div className="interaction-datetime" style={{ marginTop: "20px" }}>
                 <h4>Interaction Schedule and Time</h4>
