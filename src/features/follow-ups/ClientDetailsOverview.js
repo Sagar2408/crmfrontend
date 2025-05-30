@@ -296,9 +296,22 @@ const ClientDetailsOverview = () => {
   };
 
   const toggleListening = () => {
-    if (!recognitionRef.current) return alert("Speech recognition not supported");
-    isListening ? stopListening() : recognitionRef.current.start();
-    setIsListening(!isListening);
+    if (!recognitionRef.current) {
+      alert("Speech recognition is not supported in this browser. Please use a supported browser like Google Chrome.");
+      return;
+    }
+    setSpeechError(null); // Clear any previous errors
+    if (isListening) {
+      stopListening();
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        setSpeechError("Failed to start speech recognition. Please try again.");
+        console.error("Error starting speech recognition:", error);
+      }
+    }
   };
 
   const stopListening = () => {
