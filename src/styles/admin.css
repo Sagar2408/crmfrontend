@@ -2236,3 +2236,10 @@ body.sidebar-collapsed .admin-main-content {
     height: 80px;
   }
 }
+.activity-calendar-input {
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 6px;
+}

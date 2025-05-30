@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { FaCoffee, FaBriefcase, FaPhone } from "react-icons/fa";
 import { useApi } from "../../context/ApiContext";
+import axios from "axios";
 
 const ExecutiveActi = ({ selectedExecutiveId, executiveName }) => {
-  const { fetchExecutiveDashboardData } = useApi();
   const [activityData, setActivityData] = useState({
     workTime: 0,
     breakTime: 0,
     callTime: 0,
   });
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // ✅ Move this line to top
   const FULL_DAY_SECONDS = 8 * 3600;
 
-  // Convert time from seconds to hours and minutes
   const convertTime = (seconds) => {
     if (seconds > 0) {
       const hours = Math.floor(seconds / 3600);
@@ -23,51 +22,28 @@ const ExecutiveActi = ({ selectedExecutiveId, executiveName }) => {
     return "0h 0m";
   };
 
-  // Fetch data on executive change
   useEffect(() => {
-    if (selectedExecutiveId) {
-      const fetchData = async () => {
-        try {
-          const allData = await fetchExecutiveDashboardData();
-          const executiveData = allData.find(exec => exec.ExecutiveId === selectedExecutiveId);
-
-          if (executiveData) {
-            setActivityData({
-              workTime: executiveData.workTime || 0,
-              breakTime: executiveData.breakTime || 0,
-              callTime: executiveData.dailyCallTime || 0,
-            });
-          } else {
-            setActivityData({ workTime: 0, breakTime: 0, callTime: 0 });
-          }
-        } catch (error) {
-          console.error("Error fetching activity data:", error);
-        }
-      };
-      fetchData();
-    }
-  }, [selectedExecutiveId]);
-
-  // Simulate timer if workTime is 0
-  useEffect(() => {
-    let interval;
-    if (activityData.workTime === 0) {
-      interval = setInterval(() => {
-        setActivityData((prevState) => {
-          if (prevState.workTime < FULL_DAY_SECONDS) {
-            return {
-              ...prevState,
-              workTime: prevState.workTime + 1,
-            };
-          } else {
-            clearInterval(interval);
-            return prevState;
-          }
+    const fetchActivity = async () => {
+      if (!selectedExecutiveId || !selectedDate) return;
+      const formattedDate = selectedDate.toISOString().split("T")[0];
+      try {
+        const res = await axios.get(
+          `/api/executiveActivity/activity-by-date?ExecutiveId=${selectedExecutiveId}&date=${formattedDate}`
+        );
+        const data = res.data.activity || {};
+        setActivityData({
+          workTime: data.workTime || 0,
+          breakTime: data.breakTime || 0,
+          callTime: data.dailyCallTime || 0,
         });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, []); // Run once
+      } catch (error) {
+        console.error("Error fetching executive activity:", error);
+        setActivityData({ workTime: 0, breakTime: 0, callTime: 0 });
+      }
+    };
+
+    fetchActivity();
+  }, [selectedExecutiveId, selectedDate]);
 
   const activitiesRaw = [
     { name: "Break Time", value: activityData.breakTime, icon: <FaCoffee />, color: "#8b5cf6" },
@@ -83,10 +59,34 @@ const ExecutiveActi = ({ selectedExecutiveId, executiveName }) => {
 
   return (
     <div className="exec-activity">
-      <h2 className="exec-section-title">
-        <span>Executive Activity</span>
-        <span className="executive-name">{executiveName || "Loading..."}</span>
+      <h2
+        className="exec-section-title"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <span>Executive Activity</span>
+          <span className="executive-name">{executiveName || "Loading..."}</span>
+        </div>
+        <input
+          type="date"
+          className="activity-calendar-input"
+          value={selectedDate.toISOString().split("T")[0]}
+          onChange={(e) => setSelectedDate(new Date(e.target.value))}
+          style={{
+            fontSize: "14px",
+            padding: "4px 8px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        />
       </h2>
+
       {activities.map((activity, index) => (
         <div key={index} className="activity-item">
           <div className="activity-label">
