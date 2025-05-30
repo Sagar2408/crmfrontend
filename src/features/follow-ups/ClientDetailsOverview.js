@@ -56,6 +56,7 @@ const ClientDetailsOverview = () => {
   const [histories, setHistories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [speechError, setSpeechError] = useState(null);
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(isListening);
 
