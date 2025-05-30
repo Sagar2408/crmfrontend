@@ -1,102 +1,66 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaMicrophone, FaPaperPlane, FaUser, FaStopCircle } from "react-icons/fa";
 import { MdSmartToy } from "react-icons/md";
-import { BsRecordCircle } from "react-icons/bs"; // for record button
+import { BsRecordCircle } from "react-icons/bs";
 
 const Chat = ({ isCallActive }) => {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [isRecording, setIsRecording] = useState(false); // --- ADDED ---
-  const [recordTime, setRecordTime] = useState(0); // --- ADDED ---
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordTime, setRecordTime] = useState(0);
 
   const chatContainerRef = useRef(null);
   const recognitionRef = useRef(null);
-  const wakeWordRecognitionRef = useRef(null);
-  const mediaRecorderRef = useRef(null); // --- ADDED ---
-  const recordChunksRef = useRef([]); // --- ADDED ---
-  const timerRef = useRef(null); // --- ADDED ---
+  const mediaRecorderRef = useRef(null);
+  const recordChunksRef = useRef([]);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     chatContainerRef.current?.scrollTo(0, chatContainerRef.current.scrollHeight);
   }, [messages]);
 
-  const stopWakeWordRecognition = () => {
-    if (wakeWordRecognitionRef.current) {
-      wakeWordRecognitionRef.current.abort();
-      wakeWordRecognitionRef.current.onend = null;
-      wakeWordRecognitionRef.current = null;
-    }
-  };
-
-  const startWakeWordListening = () => {
-    if (isListening || isCallActive) return;
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition || wakeWordRecognitionRef.current) return;
-
-    wakeWordRecognitionRef.current = new SpeechRecognition();
-    wakeWordRecognitionRef.current.lang = "en-US";
-    wakeWordRecognitionRef.current.continuous = true;
-
-    wakeWordRecognitionRef.current.onresult = (event) => {
-      const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-      if (transcript.includes("hello") || transcript.includes("how can i help you")) {
-        stopWakeWordRecognition();
-        startSpeechRecognition();
-      }
-    };
-
-    wakeWordRecognitionRef.current.onerror = (event) => {
-      console.error("Wake word recognition error:", event.error);
-    };
-
-    wakeWordRecognitionRef.current.onend = () => {
-      if (!isListening && !isCallActive) {
-        setTimeout(startWakeWordListening, 2000);
-      }
-    };
-
-    try {
-      wakeWordRecognitionRef.current.start();
-    } catch (error) {
-      console.warn("Wake word start error:", error);
-    }
-  };
-
-  useEffect(() => {
-    startWakeWordListening();
-  }, []);
-
   const handleMicClick = () => {
-    isListening ? stopSpeechRecognition() : startSpeechRecognition();
+    if (isListening) {
+      stopSpeechRecognition();
+    } else {
+      startSpeechRecognition();
+    }
   };
 
   const startSpeechRecognition = () => {
-    stopWakeWordRecognition();
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return alert("Speech recognition not supported.");
-    
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+
     recognitionRef.current = new SpeechRecognition();
     recognitionRef.current.continuous = true;
     recognitionRef.current.interimResults = true;
     recognitionRef.current.lang = "en-US";
 
-    recognitionRef.current.onstart = () => setIsListening(true);
+    recognitionRef.current.onstart = () => {
+      setIsListening(true);
+    };
 
     recognitionRef.current.onresult = (event) => {
-      const transcript = event.results[event.results.length - 1][0].transcript.trim();
+      let transcript = event.results[event.results.length - 1][0].transcript.trim();
       setUserInput(transcript);
       if (event.results[event.results.length - 1].isFinal) {
         handleSend(transcript);
       }
     };
 
-    recognitionRef.current.onerror = (event) => console.error("Speech error:", event.error);
+    recognitionRef.current.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+    };
 
     recognitionRef.current.onend = () => {
-      if (!isCallActive) recognitionRef.current.start();
+      if (!isCallActive && isListening) {
+        recognitionRef.current.start();
+      }
     };
 
     recognitionRef.current.start();
@@ -109,7 +73,6 @@ const Chat = ({ isCallActive }) => {
       recognitionRef.current = null;
     }
     setIsListening(false);
-    startWakeWordListening();
   };
 
   const handleSend = async (input) => {
@@ -125,17 +88,15 @@ const Chat = ({ isCallActive }) => {
         body: JSON.stringify({ prompt: input }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed");
+      if (!response.ok) throw new Error(data.error || "Failed to fetch response");
       setMessages((prev) => [...prev, { text: data.message, isUser: false }]);
-    } catch (err) {
-      console.error("Error:", err);
+    } catch (error) {
+      console.error("Error:", error);
       setMessages((prev) => [...prev, { text: "Error: Unable to get response.", isUser: false }]);
     } finally {
       setIsTyping(false);
     }
   };
-
-  // --- AUDIO RECORDING SECTION ---
 
   const toggleRecording = async () => {
     if (!isRecording) {
@@ -144,7 +105,9 @@ const Chat = ({ isCallActive }) => {
         mediaRecorderRef.current = new MediaRecorder(stream);
 
         mediaRecorderRef.current.ondataavailable = (e) => {
-          if (e.data.size > 0) recordChunksRef.current.push(e.data);
+          if (e.data.size > 0) {
+            recordChunksRef.current.push(e.data);
+          }
         };
 
         mediaRecorderRef.current.onstop = () => {
@@ -161,17 +124,15 @@ const Chat = ({ isCallActive }) => {
         mediaRecorderRef.current.start();
         setIsRecording(true);
         setRecordTime(0);
-        timerRef.current = setInterval(() => setRecordTime((t) => t + 1), 1000);
-        console.log("Recording started...");
+        timerRef.current = setInterval(() => setRecordTime((time) => time + 1), 1000);
       } catch (err) {
-        console.error("Error starting recording:", err);
+        console.error("Error accessing microphone:", err);
       }
     } else {
       mediaRecorderRef.current?.stop();
       clearInterval(timerRef.current);
       setIsRecording(false);
       setRecordTime(0);
-      console.log("Recording stopped.");
     }
   };
 
@@ -208,7 +169,6 @@ const Chat = ({ isCallActive }) => {
               </div>
             </div>
           ))}
-
           {isTyping && <div className="typing-indicator">...</div>}
         </div>
 
@@ -217,6 +177,12 @@ const Chat = ({ isCallActive }) => {
             type="text"
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend(userInput);
+              }
+            }}
             placeholder="Type your message..."
           />
           <button onClick={() => handleSend(userInput)} className="send-button">
