@@ -60,6 +60,33 @@ const ClientDetailsOverview = () => {
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(isListening);
 
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setReasonDesc((prev) => `${prev} ${transcript}`);
+      };
+
+      recognition.onerror = (event) => {
+        setSpeechError(`Speech error: ${event.error}`);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    } else {
+      recognitionRef.current = null;
+    }
+  }, []);
+  
   const capitalize = (text) => {
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
