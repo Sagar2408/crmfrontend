@@ -24,6 +24,7 @@ function FreshLead() {
   const itemsPerPage = 10;
   const navigate = useNavigate();
   const [activePopoverIndex, setActivePopoverIndex] = useState(null);
+
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
     const executiveId = userData?.id;
@@ -57,9 +58,10 @@ function FreshLead() {
           setError("Invalid data format received for leads.");
           return;
         }
+
         const filteredLeads = leads.filter(
-          (lead) => lead.clientLead?.status === "Assigned" 
-        );         
+          (lead) => lead.clientLead?.status === "Assigned"
+        );
 
         setLeadsData(filteredLeads);
       } catch (err) {
@@ -100,7 +102,7 @@ function FreshLead() {
       assignDate: lead.assignDate,
       freshLeadId: lead.id,
     };
-  
+
     navigate(`/clients/${encodeURIComponent(lead.name)}`, {
       state: { client: clientData, createFollowUp: true, clientId: clientData.id },
     });
@@ -151,11 +153,11 @@ function FreshLead() {
                         </button>
                       </td>
                       <td>
-                      <input
-                      type="radio"
-                      name={`leadStatus-${index}`}  // Ensure no other interference with this string
-                      className="status-radio"
-                    />
+                        <input
+                          type="radio"
+                          name={`leadStatus-${index}`}
+                          className="status-radio"
+                        />
                       </td>
                       <td className="call-cell">
                         <button
@@ -170,11 +172,15 @@ function FreshLead() {
                           📞
                         </button>
                         {activePopoverIndex === index && (
-                          <div
-                            className="popover"
-                            // ref={(el) => (popoverRefs.current[index] = el)}
-                          >
-                            <button className="popover-option">
+                          <div className="popover">
+                            <button
+                              className="popover-option"
+                              onClick={() => {
+                                const cleaned = lead.phone.replace(/[^\d]/g, "");
+                                window.open(`https://wa.me/91${cleaned}`, "_blank");
+                                setActivePopoverIndex(null);
+                              }}
+                            >
                               <FontAwesomeIcon
                                 icon={faWhatsapp}
                                 style={{
@@ -185,11 +191,18 @@ function FreshLead() {
                               />
                               WhatsApp
                             </button>
-                            <button className="popover-option">
+                            <button
+                              className="popover-option"
+                              onClick={() => {
+                                const cleaned = lead.phone.replace(/[^\d]/g, "");
+                                window.open(`tel:${cleaned}`);
+                                setActivePopoverIndex(null);
+                              }}
+                            >
                               <FontAwesomeIcon
                                 icon={faPhone}
                                 style={{
-                                  color: "#25D366",
+                                  color: "#4285F4",
                                   marginRight: "6px",
                                   fontSize: "16px",
                                 }}
@@ -198,7 +211,7 @@ function FreshLead() {
                             </button>
                           </div>
                         )}
-                      </td>
+                      </td>
                     </tr>
                   ))
                 ) : (
@@ -212,7 +225,6 @@ function FreshLead() {
             </table>
           </div>
 
-          {/* Pagination */}
           <div className="fresh-pagination">
             <button
               className="fresh-pagination-btn"
@@ -238,4 +250,4 @@ function FreshLead() {
   );
 }
 
-export default FreshLead;
+export default FreshLead;
