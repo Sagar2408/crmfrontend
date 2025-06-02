@@ -7,7 +7,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPhone, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import useCopyNotification from "../../hooks/useCopyNotification";
-import { SearchContext } from "../../context/SearchContext";
 
 function FreshLead() {
   const {
