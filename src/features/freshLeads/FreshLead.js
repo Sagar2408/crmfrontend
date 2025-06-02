@@ -24,7 +24,6 @@ function FreshLead() {
 
   useCopyNotification(createCopyNotification, fetchNotifications);
   const { leadtrack } = useExecutiveActivity();
-  const { searchQuery, setActivepage } = useContext(SearchContext);
   const [leadsData, setLeadsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
