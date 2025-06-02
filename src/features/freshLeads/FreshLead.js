@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/freshlead.css";
 import { useApi } from "../../context/ApiContext";
 import { useExecutiveActivity } from "../../context/ExecutiveActivityContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPhone } from "@fortawesome/free-solid-svg-icons";
+import { faPhone, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+import useCopyNotification from "../../hooks/useCopyNotification";
+import { SearchContext } from "../../context/SearchContext";
 
 function FreshLead() {
   const {
@@ -14,56 +16,88 @@ function FreshLead() {
     fetchExecutiveData,
     executiveLoading,
     createFollowUp,
+    verifyNumberAPI,
+    verificationResults,
+    verificationLoading,
+    fetchNotifications,
+    createCopyNotification,
   } = useApi();
 
+  useCopyNotification(createCopyNotification, fetchNotifications);
   const { leadtrack } = useExecutiveActivity();
+  const { searchQuery, setActivepage } = useContext(SearchContext);
   const [leadsData, setLeadsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const navigate = useNavigate();
   const [activePopoverIndex, setActivePopoverIndex] = useState(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [verifyingIndex, setVerifyingIndex] = useState(null);
+
+  const itemsPerPage = 9;
+  const navigate = useNavigate();
+
+  const handleVerify = async (index, number) => {
+    setVerifyingIndex(index);
+    await verifyNumberAPI(index, number);
+    setVerifyingIndex(null);
+  };
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
     const executiveId = userData?.id;
     if (executiveId) {
       leadtrack(executiveId);
-    } else {
-      console.error("ExecutiveId not found");
     }
   }, []);
 
   useEffect(() => {
     const loadLeads = async () => {
-      if (!executiveInfo?.username) {
-        if (!executiveLoading) {
-          await fetchExecutiveData();
-        }
-        return;
-      }
-
+      if (hasLoaded) return;
       try {
         setLoading(true);
-        const data = await fetchFreshLeadsAPI();
-        let leads = [];
 
+        if (!executiveInfo && !executiveLoading) {
+          await fetchExecutiveData();
+        }
+
+        const data = await fetchFreshLeadsAPI();
+
+        let leads = [];
         if (Array.isArray(data)) {
           leads = data;
         } else if (data && Array.isArray(data.data)) {
           leads = data.data;
         } else {
-          console.error("❌ leadsData is not an array:", data);
-          setError("Invalid data format received for leads.");
+          setError("Invalid leads data format.");
           return;
         }
 
-        const filteredLeads = leads.filter(
-          (lead) => lead.clientLead?.status === "Assigned"
-        );
+        const filteredLeads = leads
+          .filter(
+            (lead) =>
+              lead.clientLead?.status === "New" ||
+              lead.clientLead?.status === "Assigned"
+          )
+          .sort((a, b) => {
+            const dateA = new Date(
+              a.assignDate ||
+                a.lead?.assignmentDate ||
+                a.clientLead?.assignDate ||
+                0
+            );
+            const dateB = new Date(
+              b.assignDate ||
+                b.lead?.assignmentDate ||
+                b.clientLead?.assignDate ||
+                0
+            );
+            return dateB - dateA;
+          });
 
         setLeadsData(filteredLeads);
+        setCurrentPage(1);
+        setHasLoaded(true);
       } catch (err) {
         setError("Failed to load leads. Please try again.");
       } finally {
@@ -72,20 +106,29 @@ function FreshLead() {
     };
 
     loadLeads();
-  }, [executiveInfo?.username, executiveLoading]);
+  }, [executiveInfo, executiveLoading, hasLoaded]);
 
-  const totalPages = Math.ceil(leadsData.length / itemsPerPage);
-  const currentLeads = leadsData.slice(
+  const filteredLeadsData = leadsData.filter((lead) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      lead.name?.toLowerCase().includes(query) ||
+      lead.phone?.toString().includes(query) ||
+      lead.email?.toLowerCase().includes(query)
+    );
+  });
+
+  const totalPages = Math.ceil(filteredLeadsData.length / itemsPerPage);
+  const currentLeads = filteredLeadsData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
   const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
 
   const handleAddFollowUp = (lead) => {
@@ -104,7 +147,11 @@ function FreshLead() {
     };
 
     navigate(`/clients/${encodeURIComponent(lead.name)}`, {
-      state: { client: clientData, createFollowUp: true, clientId: clientData.id },
+      state: {
+        client: clientData,
+        createFollowUp: true,
+        clientId: clientData.id,
+      },
     });
   };
 
@@ -114,6 +161,7 @@ function FreshLead() {
     <div className="fresh-leads-main-content">
       {loading && <p className="loading-text">Loading leads...</p>}
       {error && <p className="error-text">{error}</p>}
+
       {!loading && !error && (
         <>
           <div className="fresh-leads-table-container">
@@ -149,15 +197,41 @@ function FreshLead() {
                           className="followup-badge"
                           onClick={() => handleAddFollowUp(lead)}
                         >
-                          Add Follow Up ✏
+                          Add Follow Up
+                          <FontAwesomeIcon
+                            icon={faPenToSquare}
+                            className="icon"
+                          />
                         </button>
                       </td>
                       <td>
-                        <input
-                          type="radio"
-                          name={`leadStatus-${index}`}
-                          className="status-radio"
-                        />
+                        <div className="status-cell">
+                          <button
+                            onClick={() => handleVerify(index, lead.phone)}
+                            className="verify-btn"
+                            disabled={
+                              verifyingIndex === index || verificationLoading
+                            }
+                          >
+                            {verifyingIndex === index
+                              ? "Verifying..."
+                              : "Get Verified"}
+                          </button>
+                          {verificationResults[index] && (
+                            <div className="verify-result">
+                              {verificationResults[index].error ? (
+                                <span className="text-red-600">
+                                  ❌ {verificationResults[index].error}
+                                </span>
+                              ) : (
+                                <span className="text-green-600">
+                                  ✅ {verificationResults[index].name ||
+                                    verificationResults[index].location}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="call-cell">
                         <button
@@ -225,25 +299,27 @@ function FreshLead() {
             </table>
           </div>
 
-          <div className="fresh-pagination">
-            <button
-              className="fresh-pagination-btn"
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-            >
-              « Prev
-            </button>
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              className="fresh-pagination-btn"
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-            >
-              Next »
-            </button>
-          </div>
+          {totalPages > 1 && (
+            <div className="fresh-pagination">
+              <button
+                className="fresh-pagination-btn"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                « Prev
+              </button>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="fresh-pagination-btn"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next »
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
