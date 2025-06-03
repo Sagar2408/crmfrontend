@@ -6,6 +6,8 @@ import { useExecutiveActivity } from "../../context/ExecutiveActivityContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPhone } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+import { initiateCall } from "../../services/callHandler"; // 🆕 agent call trigger
+import { useCall } from "../../context/CallContext"; // 🆕 global dialer state
 
 function FreshLead() {
   const {
@@ -24,6 +26,7 @@ function FreshLead() {
   const itemsPerPage = 10;
   const navigate = useNavigate();
   const [activePopoverIndex, setActivePopoverIndex] = useState(null);
+  const { startCall } = useCall(); // 🆕
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
@@ -108,6 +111,11 @@ function FreshLead() {
     });
   };
 
+  const handleCall = async (type, phone) => {
+    await initiateCall(type, phone);
+    startCall(phone); // 🆕 show dialer globally
+  };
+
   if (executiveLoading) return <p>Loading executive data...</p>;
 
   return (
@@ -177,17 +185,13 @@ function FreshLead() {
                               className="popover-option"
                               onClick={() => {
                                 const cleaned = lead.phone.replace(/[^\d]/g, "");
-                                window.open(`https://wa.me/91${cleaned}`, "_blank");
+                                handleCall("whatsapp", cleaned);
                                 setActivePopoverIndex(null);
                               }}
                             >
                               <FontAwesomeIcon
                                 icon={faWhatsapp}
-                                style={{
-                                  color: "#25D366",
-                                  marginRight: "6px",
-                                  fontSize: "18px",
-                                }}
+                                style={{ color: "#25D366", marginRight: "6px", fontSize: "18px" }}
                               />
                               WhatsApp
                             </button>
@@ -195,17 +199,13 @@ function FreshLead() {
                               className="popover-option"
                               onClick={() => {
                                 const cleaned = lead.phone.replace(/[^\d]/g, "");
-                                window.open(`tel:${cleaned}`);
+                                handleCall("phonelink", cleaned);
                                 setActivePopoverIndex(null);
                               }}
                             >
                               <FontAwesomeIcon
                                 icon={faPhone}
-                                style={{
-                                  color: "#4285F4",
-                                  marginRight: "6px",
-                                  fontSize: "16px",
-                                }}
+                                style={{ color: "#4285F4", marginRight: "6px", fontSize: "16px" }}
                               />
                               Normal Call
                             </button>
