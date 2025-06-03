@@ -35,7 +35,8 @@ import ExecutiveFormRoutes from "./layouts/ExecutiveFormRoutes";
 
 // 🆕 Global Dialer Context and UI
 import { CallProvider } from "./context/CallContext";
-import DialerBox from "./features/DialerBox";
+import DialerBox from "./features/dialerbox/dialerbox";
+
 
 const App = () => {
   const [followUpText, setFollowUpText] = useState(() => {
