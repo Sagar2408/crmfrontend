@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useCall } from '../context/CallContext'; // 🔄 Global call state
+import { useCall } from '../../context/CallContext';
+ // 🔄 Global call state
 
 const DialerBox = () => {
   const { dialingPhone, stopCall } = useCall();
