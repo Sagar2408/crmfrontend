@@ -107,18 +107,28 @@ function FreshLead() {
     });
   };
 
-  const handleCall = (type, phone) => {
-    const cleaned = phone.replace(/[^\d]/g, "");
-    setSplitScreen(true);
+  const handleCall = async (type, phone) => {
+  const cleaned = phone.replace(/[^\d]/g, "");
 
-    if (type === "whatsapp") {
-      window.open(`https://wa.me/${cleaned}`, "_blank", "width=600,height=800");
-    } else if (type === "phonelink") {
-      window.open(`ms-phone:?callto=${cleaned}`, "_blank");
+  if (type === "whatsapp") {
+    try {
+      await fetch("http://localhost:5000/launch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleaned }),
+      });
+    } catch (error) {
+      console.error("WhatsApp launch failed:", error);
     }
+  } else if (type === "phonelink") {
+    window.open(`ms-phone:?callto=${cleaned}`, "_blank");
+  }
 
-    setTimeout(() => setSplitScreen(false), 30000);
-  };
+  // Optional: split screen effect
+  setSplitScreen(true);
+  setTimeout(() => setSplitScreen(false), 30000);
+};
+
 
   if (executiveLoading) return <p>Loading executive data...</p>;
 
@@ -173,48 +183,49 @@ function FreshLead() {
                           />
                         </td>
                         <td className="call-cell">
-                          <button
-                            className="call-button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActivePopoverIndex(
-                                activePopoverIndex === index ? null : index
-                              );
-                            }}
-                          >
-                            📞
-                          </button>
-                          {activePopoverIndex === index && (
-                            <div className="popover">
-                              <button
-                                className="popover-option"
-                                onClick={() => {
-                                  handleCall("whatsapp", lead.phone);
-                                  setActivePopoverIndex(null);
-                                }}
-                              >
-                                <FontAwesomeIcon
-                                  icon={faWhatsapp}
-                                  style={{ color: "#25D366", marginRight: "6px", fontSize: "18px" }}
-                                />
-                                WhatsApp
-                              </button>
-                              <button
-                                className="popover-option"
-                                onClick={() => {
-                                  handleCall("phonelink", lead.phone);
-                                  setActivePopoverIndex(null);
-                                }}
-                              >
-                                <FontAwesomeIcon
-                                  icon={faPhone}
-                                  style={{ color: "#4285F4", marginRight: "6px", fontSize: "16px" }}
-                                />
-                                Normal Call
-                              </button>
-                            </div>
-                          )}
-                        </td>
+  <button
+    className="call-button"
+    onClick={(e) => {
+      e.stopPropagation();
+      setActivePopoverIndex(
+        activePopoverIndex === index ? null : index
+      );
+    }}
+  >
+    📞
+  </button>
+  {activePopoverIndex === index && (
+    <div className="popover">
+      <button
+        className="popover-option"
+        onClick={() => {
+          handleCall("whatsapp", lead.phone);  // 🟢 Calls Flask for WhatsApp
+          setActivePopoverIndex(null);
+        }}
+      >
+        <FontAwesomeIcon
+          icon={faWhatsapp}
+          style={{ color: "#25D366", marginRight: "6px", fontSize: "18px" }}
+        />
+        WhatsApp
+      </button>
+      <button
+        className="popover-option"
+        onClick={() => {
+          handleCall("phonelink", lead.phone);  // 🟢 Opens Phone Link
+          setActivePopoverIndex(null);
+        }}
+      >
+        <FontAwesomeIcon
+          icon={faPhone}
+          style={{ color: "#4285F4", marginRight: "6px", fontSize: "16px" }}
+        />
+        Normal Call
+      </button>
+    </div>
+  )}
+</td>
+
                       </tr>
                     ))
                   ) : (
