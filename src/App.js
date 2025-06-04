@@ -33,7 +33,6 @@ import ClientLogin from "./features/process-client/ClientLogin";
 import ClientSignup from "./features/process-client/ClientSignup";
 import ExecutiveFormRoutes from "./layouts/ExecutiveFormRoutes";
 
-
 const App = () => {
   const [followUpText, setFollowUpText] = useState(() => {
     const saved = localStorage.getItem('followUpText');
@@ -46,52 +45,43 @@ const App = () => {
 
   return (
     <ThemeProvider>
-      <CallProvider> {/* 🆕 Wrap entire app with global call context */}
-        <Routes>
-          <Route path="/" element={<Navigate replace to="/signup" />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          {/* Public master routes - login & signup */}
-          <Route path="/master/loginmaster" element={<LoginMaster />} />
-          <Route path="/master/signupmaster" element={<SignupMaster />} />
-          <Route path="/process/client/login" element={<ClientLogin />} />
-          <Route path="/process/client/signup" element={<ClientSignup />} />
-          <Route 
-            path="/follow-up/*" 
-            element={
-              <PrivateRoute>
-                <FollowUpRoutes onTextUpdate={setFollowUpText} />
-              </PrivateRoute>
-            } 
-          />
-          <Route path="/clients/*" element={<PrivateRoute><ClientRoutes /></PrivateRoute>} />
-          <Route path="/process/*" element={<PrivateRoute><ProcessRoutes /></PrivateRoute>} />
-          <Route path="/executiveform/*" element={<PrivateRoute><ExecutiveFormRoutes/></PrivateRoute>} />
-          <Route path="/settings" element={<PrivateRoute><SettingRoutes/></PrivateRoute>} >
-            <Route index element={<Navigate to="profile" replace />} />
-            <Route path="profile" element={<PrivateRoute><MyProfile /></PrivateRoute>} />
-            <Route path="theme" element={<PrivateRoute><Theme /></PrivateRoute>} />
-            <Route path="change-password" element={<PrivateRoute><ChangePassword /></PrivateRoute>} />
-          </Route>
-          <Route path="/master/*" element={<PrivateMasterRoute><MasterRoutes /></PrivateMasterRoute>} />   
-          <Route path="/monitoring/*" element={<PrivateRoute><AdminPanelRoutes /></PrivateRoute>} />
-          <Route path="/schedule" element={<PrivateRoute><ScheduleRoutes/></PrivateRoute>} />
-          <Route path="/invoice" element={<PrivateRoute><InvoiceRoutes/></PrivateRoute>} />
-          <Route path="/notification" element={<PrivateRoute><NotificationRoutes/></PrivateRoute>} />
-          <Route path="/admin/*" element={<PrivateRoute><AdminRoutes /></PrivateRoute>} />
-          <Route path="/executive/*" element={<PrivateRoute><ExecutiveRoutes /></PrivateRoute>} />
-          <Route path="/customer/*" element={<PrivateRoute><CustomerRoutes /></PrivateRoute>} />
-          <Route path="/close-leads/*" element={<PrivateRoute><CloseLeadRoutes /></PrivateRoute>} />
-          <Route path="/chatBot/*" element={<PrivateRoute><ChatBotRoutes /></PrivateRoute>} />
-          <Route path="/leadassign/*" element={<PrivateRoute><LeadAssignRoutes /></PrivateRoute>} />
-          <Route path="/freshlead/*" element={<PrivateRoute><FreshLeadRoutes /></PrivateRoute>} />
-          <Route path="*" element={<Navigate to="/login" />} />
-        </Routes>
-
-        <DialerBox /> {/* 🆕 Always-visible dialer on every page */}
-      </CallProvider>
+      <Routes>
+        <Route path="/" element={<Navigate replace to="/signup" />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/master/loginmaster" element={<LoginMaster />} />
+        <Route path="/master/signupmaster" element={<SignupMaster />} />
+        <Route path="/process/client/login" element={<ClientLogin />} />
+        <Route path="/process/client/signup" element={<ClientSignup />} />
+        <Route 
+          path="/follow-up/*" 
+          element={<PrivateRoute><FollowUpRoutes onTextUpdate={setFollowUpText} /></PrivateRoute>} 
+        />
+        <Route path="/clients/*" element={<PrivateRoute><ClientRoutes /></PrivateRoute>} />
+        <Route path="/process/*" element={<PrivateRoute><ProcessRoutes /></PrivateRoute>} />
+        <Route path="/executiveform/*" element={<PrivateRoute><ExecutiveFormRoutes/></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><SettingRoutes/></PrivateRoute>} >
+          <Route index element={<Navigate to="profile" replace />} />
+          <Route path="profile" element={<PrivateRoute><MyProfile /></PrivateRoute>} />
+          <Route path="theme" element={<PrivateRoute><Theme /></PrivateRoute>} />
+          <Route path="change-password" element={<PrivateRoute><ChangePassword /></PrivateRoute>} />
+        </Route>
+        <Route path="/master/*" element={<PrivateMasterRoute><MasterRoutes /></PrivateMasterRoute>} />   
+        <Route path="/monitoring/*" element={<PrivateRoute><AdminPanelRoutes /></PrivateRoute>} />
+        <Route path="/schedule" element={<PrivateRoute><ScheduleRoutes/></PrivateRoute>} />
+        <Route path="/invoice" element={<PrivateRoute><InvoiceRoutes/></PrivateRoute>} />
+        <Route path="/notification" element={<PrivateRoute><NotificationRoutes /></PrivateRoute>} />
+        <Route path="/admin/*" element={<PrivateRoute><AdminRoutes /></PrivateRoute>} />
+        <Route path="/executive/*" element={<PrivateRoute><ExecutiveRoutes /></PrivateRoute>} />
+        <Route path="/customer/*" element={<PrivateRoute><CustomerRoutes /></PrivateRoute>} />
+        <Route path="/close-leads/*" element={<PrivateRoute><CloseLeadRoutes /></PrivateRoute>} />
+        <Route path="/chatBot/*" element={<PrivateRoute><ChatBotRoutes /></PrivateRoute>} />
+        <Route path="/leadassign/*" element={<PrivateRoute><LeadAssignRoutes /></PrivateRoute>} />
+        <Route path="/freshlead/*" element={<PrivateRoute><FreshLeadRoutes /></PrivateRoute>} />
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
     </ThemeProvider>
   );
 };
