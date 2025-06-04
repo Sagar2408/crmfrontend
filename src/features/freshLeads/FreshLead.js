@@ -6,8 +6,6 @@ import { useExecutiveActivity } from "../../context/ExecutiveActivityContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPhone } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-import { initiateCall } from "../../services/callHandler"; // 🆕 agent call trigger
-import { useCall } from "../../context/CallContext"; // 🆕 global dialer state
 
 function FreshLead() {
   const {
@@ -26,7 +24,7 @@ function FreshLead() {
   const itemsPerPage = 10;
   const navigate = useNavigate();
   const [activePopoverIndex, setActivePopoverIndex] = useState(null);
-  const { startCall } = useCall(); // 🆕
+  const [splitScreen, setSplitScreen] = useState(false); // 🆕
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
@@ -111,15 +109,26 @@ function FreshLead() {
     });
   };
 
-  const handleCall = async (type, phone) => {
-    await initiateCall(type, phone);
-    startCall(phone); // 🆕 show dialer globally
+  const handleCall = (type, phone) => {
+    const cleaned = phone.replace(/[^\d]/g, "");
+    setSplitScreen(true);
+
+    if (type === "whatsapp") {
+      window.open(`https://wa.me/${cleaned}`, "_blank", "width=600,height=800");
+    } else if (type === "phonelink") {
+      window.open(`ms-phone:?callto=${cleaned}`, "_blank");
+    }
+
+    // Auto-collapse after 30 seconds (adjust if needed)
+    setTimeout(() => {
+      setSplitScreen(false);
+    }, 30000);
   };
 
   if (executiveLoading) return <p>Loading executive data...</p>;
 
   return (
-    <div className="fresh-leads-main-content">
+    <div className={`fresh-leads-main-content ${splitScreen ? "split-layout" : ""}`}>
       {loading && <p className="loading-text">Loading leads...</p>}
       {error && <p className="error-text">{error}</p>}
       {!loading && !error && (
@@ -184,8 +193,7 @@ function FreshLead() {
                             <button
                               className="popover-option"
                               onClick={() => {
-                                const cleaned = lead.phone.replace(/[^\d]/g, "");
-                                handleCall("whatsapp", cleaned);
+                                handleCall("whatsapp", lead.phone);
                                 setActivePopoverIndex(null);
                               }}
                             >
@@ -198,8 +206,7 @@ function FreshLead() {
                             <button
                               className="popover-option"
                               onClick={() => {
-                                const cleaned = lead.phone.replace(/[^\d]/g, "");
-                                handleCall("phonelink", cleaned);
+                                handleCall("phonelink", lead.phone);
                                 setActivePopoverIndex(null);
                               }}
                             >

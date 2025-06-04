@@ -12,7 +12,6 @@ import { CompanyProvider } from './context/CompanyContext';
 import { ThemeProvider } from './features/admin/ThemeContext';
 import { ProcessProvider } from './context/ProcessAuthContext';
 import { ProcessServiceProvider } from './context/ProcessServiceContext';
-import { CallProvider } from './context/CallContext'; // 🆕 Global dialer context
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -27,9 +26,7 @@ root.render(
                 <CompanyProvider>
                   <ProcessProvider>
                     <ProcessServiceProvider>
-                      <CallProvider> {/* 🆕 Global wrapper for dialer */}
                         <App />
-                      </CallProvider>
                     </ProcessServiceProvider>
                   </ProcessProvider>
                 </CompanyProvider>
