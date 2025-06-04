@@ -1,3 +1,4 @@
+// ✅ FreshLead.js (Final Version with Split Screen)
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/freshlead.css";
@@ -24,15 +25,13 @@ function FreshLead() {
   const itemsPerPage = 10;
   const navigate = useNavigate();
   const [activePopoverIndex, setActivePopoverIndex] = useState(null);
-  const [splitScreen, setSplitScreen] = useState(false); // 🆕
+  const [splitScreen, setSplitScreen] = useState(false);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
     const executiveId = userData?.id;
     if (executiveId) {
       leadtrack(executiveId);
-    } else {
-      console.error("ExecutiveId not found");
     }
   }, []);
 
@@ -55,7 +54,6 @@ function FreshLead() {
         } else if (data && Array.isArray(data.data)) {
           leads = data.data;
         } else {
-          console.error("❌ leadsData is not an array:", data);
           setError("Invalid data format received for leads.");
           return;
         }
@@ -119,140 +117,139 @@ function FreshLead() {
       window.open(`ms-phone:?callto=${cleaned}`, "_blank");
     }
 
-    // Auto-collapse after 30 seconds (adjust if needed)
-    setTimeout(() => {
-      setSplitScreen(false);
-    }, 30000);
+    setTimeout(() => setSplitScreen(false), 30000);
   };
 
   if (executiveLoading) return <p>Loading executive data...</p>;
 
   return (
-    <div className={`fresh-leads-main-content ${splitScreen ? "split-layout" : ""}`}>
-      {loading && <p className="loading-text">Loading leads...</p>}
-      {error && <p className="error-text">{error}</p>}
-      {!loading && !error && (
-        <>
-          <div className="fresh-leads-table-container">
-            <table className="fresh-leads-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Phone</th>
-                  <th>Email</th>
-                  <th>Add follow-ups</th>
-                  <th>Status</th>
-                  <th>Call</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentLeads.length > 0 ? (
-                  currentLeads.map((lead, index) => (
-                    <tr key={index}>
-                      <td>
-                        <div className="fresh-leads-name">
-                          <div className="fresh-lead-detail">
-                            <div>{lead.name}</div>
-                            <div className="fresh-leads-profession">
-                              {lead.profession}
+    <div className={`fresh-leads-split-container ${splitScreen ? "split-mode" : ""}`}>
+      <div className="fresh-leads-main-content">
+        {loading && <p className="loading-text">Loading leads...</p>}
+        {error && <p className="error-text">{error}</p>}
+        {!loading && !error && (
+          <>
+            <div className="fresh-leads-table-container">
+              <table className="fresh-leads-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Add follow-ups</th>
+                    <th>Status</th>
+                    <th>Call</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentLeads.length > 0 ? (
+                    currentLeads.map((lead, index) => (
+                      <tr key={index}>
+                        <td>
+                          <div className="fresh-leads-name">
+                            <div className="fresh-lead-detail">
+                              <div>{lead.name}</div>
+                              <div className="fresh-leads-profession">
+                                {lead.profession}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td>{lead.phone}</td>
-                      <td>{lead.email}</td>
-                      <td>
-                        <button
-                          className="followup-badge"
-                          onClick={() => handleAddFollowUp(lead)}
-                        >
-                          Add Follow Up ✏
-                        </button>
-                      </td>
-                      <td>
-                        <input
-                          type="radio"
-                          name={`leadStatus-${index}`}
-                          className="status-radio"
-                        />
-                      </td>
-                      <td className="call-cell">
-                        <button
-                          className="call-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActivePopoverIndex(
-                              activePopoverIndex === index ? null : index
-                            );
-                          }}
-                        >
-                          📞
-                        </button>
-                        {activePopoverIndex === index && (
-                          <div className="popover">
-                            <button
-                              className="popover-option"
-                              onClick={() => {
-                                handleCall("whatsapp", lead.phone);
-                                setActivePopoverIndex(null);
-                              }}
-                            >
-                              <FontAwesomeIcon
-                                icon={faWhatsapp}
-                                style={{ color: "#25D366", marginRight: "6px", fontSize: "18px" }}
-                              />
-                              WhatsApp
-                            </button>
-                            <button
-                              className="popover-option"
-                              onClick={() => {
-                                handleCall("phonelink", lead.phone);
-                                setActivePopoverIndex(null);
-                              }}
-                            >
-                              <FontAwesomeIcon
-                                icon={faPhone}
-                                style={{ color: "#4285F4", marginRight: "6px", fontSize: "16px" }}
-                              />
-                              Normal Call
-                            </button>
-                          </div>
-                        )}
+                        </td>
+                        <td>{lead.phone}</td>
+                        <td>{lead.email}</td>
+                        <td>
+                          <button
+                            className="followup-badge"
+                            onClick={() => handleAddFollowUp(lead)}
+                          >
+                            Add Follow Up ✏
+                          </button>
+                        </td>
+                        <td>
+                          <input
+                            type="radio"
+                            name={`leadStatus-${index}`}
+                            className="status-radio"
+                          />
+                        </td>
+                        <td className="call-cell">
+                          <button
+                            className="call-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActivePopoverIndex(
+                                activePopoverIndex === index ? null : index
+                              );
+                            }}
+                          >
+                            📞
+                          </button>
+                          {activePopoverIndex === index && (
+                            <div className="popover">
+                              <button
+                                className="popover-option"
+                                onClick={() => {
+                                  handleCall("whatsapp", lead.phone);
+                                  setActivePopoverIndex(null);
+                                }}
+                              >
+                                <FontAwesomeIcon
+                                  icon={faWhatsapp}
+                                  style={{ color: "#25D366", marginRight: "6px", fontSize: "18px" }}
+                                />
+                                WhatsApp
+                              </button>
+                              <button
+                                className="popover-option"
+                                onClick={() => {
+                                  handleCall("phonelink", lead.phone);
+                                  setActivePopoverIndex(null);
+                                }}
+                              >
+                                <FontAwesomeIcon
+                                  icon={faPhone}
+                                  style={{ color: "#4285F4", marginRight: "6px", fontSize: "16px" }}
+                                />
+                                Normal Call
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="no-leads-text">
+                        No assigned leads available.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="no-leads-text">
-                      No assigned leads available.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="fresh-pagination">
-            <button
-              className="fresh-pagination-btn"
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-            >
-              « Prev
-            </button>
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              className="fresh-pagination-btn"
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-            >
-              Next »
-            </button>
-          </div>
-        </>
-      )}
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="fresh-pagination">
+              <button
+                className="fresh-pagination-btn"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                « Prev
+              </button>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="fresh-pagination-btn"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next »
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+      {splitScreen && <div className="call-panel-placeholder">Calling via external app...</div>}
     </div>
   );
 }

@@ -488,14 +488,45 @@ gap: 10px;
   width: 100%;
   height: 100vh;
 }
-
-.split-layout .fresh-leads-table-container {
-  width: 50% !important;
-  height: 100%;
+/* ✅ freshlead.css (Final Split Screen Styles) */
+.fresh-leads-split-container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.split-layout::after {
-  content: '';
+.fresh-leads-main-content {
+  width: 100%;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.fresh-leads-split-container.split-mode .fresh-leads-main-content {
+  width: 50%;
+}
+
+.fresh-leads-split-container .call-panel-placeholder {
   width: 50%;
   background-color: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #666;
+  font-weight: 500;
 }
+
+/* Optional extra spacing and mobile responsiveness */
+@media (max-width: 768px) {
+  .fresh-leads-split-container.split-mode {
+    flex-direction: column;
+  }
+  .fresh-leads-split-container.split-mode .fresh-leads-main-content,
+  .fresh-leads-split-container.split-mode .call-panel-placeholder {
+    width: 100%;
+    height: 50%;
+  }
+}
+
