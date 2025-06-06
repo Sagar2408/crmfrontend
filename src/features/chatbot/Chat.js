@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FaMicrophone, FaPaperPlane, FaUser, FaStopCircle } from "react-icons/fa";
 import { MdSmartToy } from "react-icons/md";
 import { BsRecordCircle } from "react-icons/bs";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 // Extract token from URL
 const token = new URLSearchParams(window.location.search).get("token");
