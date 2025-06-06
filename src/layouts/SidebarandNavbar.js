@@ -294,7 +294,15 @@ const SidebarandNavbar = () => {
   )}
 </div>
 
-      <FontAwesomeIcon className="navbar_icon bot_icon" icon={faRobot} onClick={() => window.open("/chatbot", "_blank")} />
+      <FontAwesomeIcon
+  className="navbar_icon bot_icon"
+  icon={faRobot}
+  onClick={() => {
+    const token = localStorage.getItem("token");
+    if (!token) return alert("Please login again");
+    window.open(`/chatbot?token=${token}`, "_blank");
+  }}
+/>
       <div onMouseEnter={() => setShowTracker(true)} onMouseLeave={() => setShowTracker(false)}>
       <FontAwesomeIcon 
         className="navbar_icon" icon={faClock} title="Toggle Activity Tracker" onClick={() => setShowTracker(prev => !prev)}  /> {showTracker &&<ExecutiveActivity /> }</div>
