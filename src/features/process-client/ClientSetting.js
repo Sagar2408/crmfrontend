@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useRef ,} from 'react';
 import { FaEdit, FaRegCopy } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import { useProcessService } from '../../context/ProcessServiceContext';
 const ClientSetting = () => {
   const [profileImage, setProfileImage] = useState(null);
     
-  const{profile,getprofile,handleProfileSettings,profiles}=useProcessService();
-   
+  const{profile,getProfile,handleProfileSettings,profiles,profileLoading}=useProcessService();
+   const[loading,setLoading]=useState()
   const [detailsExist, setDetailsExist] = useState(false);
+  const navigate = useNavigate();
+  const hasFetched = useRef(false);
  const [formData, setFormData] = useState({
   customerId: '',
   dob: '',
@@ -17,8 +20,56 @@ const ClientSetting = () => {
   updatedAt: '',
   createdAt: '',
 });
+
 useEffect(() => {
-  if (profiles) {
+  const fetchProfile = async () => {
+    setLoading(true);
+    const data = await getProfile(); // <- Get response
+    setLoading(false);
+
+    if (data && Object.keys(data).length > 0) {
+      setFormData({
+        customerId: data.customerId || '',
+        dob: data.dob || '',
+        id: data.id || '',
+        nationality: data.nationality || '',
+        passportNumber: data.passportNumber || '',
+        phone: data.phone || '',
+        updatedAt: data.updatedAt || '',
+        createdAt: data.createdAt || '',
+        profession: data.profession || '',
+        location: data.location || '',
+        bio: data.bio || '',
+        updates: data.updates || false,
+        profileView: data.profileView || false,
+      });
+      setDetailsExist(true);
+    } else {
+      // New user – clear form
+      setFormData({
+        customerId: '',
+        dob: '',
+        id: '',
+        nationality: '',
+        passportNumber: '',
+        phone: '',
+        updatedAt: '',
+        createdAt: '',
+        profession: '',
+        location: '',
+        bio: '',
+        updates: false,
+        profileView: false,
+      });
+      setDetailsExist(false);
+    }
+  };
+
+  fetchProfile();
+}, []);
+
+useEffect(() => {
+  if (profiles && Object.keys(profiles).length > 0) {
     setFormData({
       customerId: profiles.customerId || '',
       dob: profiles.dob || '',
@@ -28,56 +79,52 @@ useEffect(() => {
       phone: profiles.phone || '',
       updatedAt: profiles.updatedAt || '',
       createdAt: profiles.createdAt || '',
+      profession: profiles.profession || '',
+      location: profiles.location || '',
+      bio: profiles.bio || '',
+      updates: profiles.updates || false,
+      profileView: profiles.profileView || false,
     });
+    setDetailsExist(true);
+  } else {
+    // Ensure no stale data shows up
+    setFormData({
+      customerId: '',
+      dob: '',
+      id: '',
+      nationality: '',
+      passportNumber: '',
+      phone: '',
+      updatedAt: '',
+      createdAt: '',
+      profession: '',
+      location: '',
+      bio: '',
+      updates: false,
+      profileView: false,
+    });
+    setDetailsExist(false);
   }
 }, [profiles]);
-  useEffect(() => {
-    const fetchProfile = async () => {
-      await getprofile();
-    };
-  
-    fetchProfile();
-    console.log(profiles,"abc")
-  }, []);
-  
-  // const handleSubmit = async () => {
-  //   try {
-  //     await profile(formData);
-  //     alert("Signup successful!");
 
-  //     // ✅ Redirect to login after 2 seconds
-      
-  //   } catch (error) {
-  //     alert(error.message);
-  //   }
-  // };
-  //  const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     await handleProfileSettings(formData);
-  //     alert('Customer details created successfully');
-  //   } catch (err) {
-  //     alert(err.error || 'Failed to create details');
-  //   }
-  // };
    const handleSubmit = async (e) => {
     e.preventDefault();
-
+    const userType = localStorage.getItem("userType");
     try {
       if (detailsExist) {
         // Always PUT if detailsExist is true
         await handleProfileSettings(formData);
-        alert('Customer details updated successfully');
+        alert(`${userType} details updated successfully`);
       } else {
         try {
           await profile(formData);
-          alert('Customer details created successfully');
+          alert(`${userType} details created successfully`);
           setDetailsExist(true); // Now mark as exist
         } catch (err) {
           // Check if error is 'Customer details already exist', then switch to PUT
           if (err.error === 'Customer details already exist') {
             await handleProfileSettings(formData);
-            alert('Customer details updated successfully');
+            alert(`${userType} details updated successfully`);
             setDetailsExist(true);
           } else {
             throw err;
@@ -105,12 +152,6 @@ useEffect(() => {
       [name]: type === 'checkbox' ? checked : value,
     });
   };
-
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   alert('Saved successfully!');
-  //   console.log('Saved data:', formData);
-  // };
 
   const handleCopyLink = () => {
     const link = "https://www.portfoliolink.com";
@@ -169,7 +210,11 @@ useEffect(() => {
             <span>Notifications</span>
             <span>Members</span>
             <span>Billings</span>
-            <span>Language & Region</span>
+            {localStorage.getItem("userType") === "processperson" ? (
+              <span onClick={() => navigate("/process/client/create-client")}>Create Client</span>
+            ) : (
+              <span>Language & Region</span>
+            )}
             <span>Security</span>
           </div>
 
@@ -180,22 +225,22 @@ useEffect(() => {
                 <div className="process-field">
                   <label>Nationality</label>
                  <input
-  type="text"
-  name="nationality"
-  value={formData.nationality}
-  onChange={handleChange}
-  placeholder="Enter Nationality"
-/>
+                  type="text"
+                  name="nationality"
+                  value={formData.nationality}
+                  onChange={handleChange}
+                  placeholder="Enter Nationality"
+                />
                 </div>
                 <div className="process-field">
                   <label>Phone</label>
                  <input
-  type="text"
-  name="phone"
-  value={formData.phone}
-  onChange={handleChange}
-  placeholder="Enter your phone"
-/>
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Enter your phone"
+                  />
                 </div>
               </div>
                <div className="process-row">
@@ -203,24 +248,22 @@ useEffect(() => {
                   <label>DOB</label>
                  <input
                    type="text"
-  name="dob"
-  value={formData.dob}
-  onChange={handleChange}
-  placeholder="Enter your DOB"
-/>
+                      name="dob"
+                      value={formData.dob}
+                      onChange={handleChange}
+                      placeholder="Enter your DOB"
+                    />
                 </div>
                    <div className="process-field">
                   <label>Passport Number</label>
                <input
-  type="text"
-  name="passportNumber"
-  value={formData.passportNumber}
-  onChange={handleChange}
-  placeholder="Enter Passport Number"
-/></div>
+                type="text"
+                name="passportNumber"
+                value={formData.passportNumber}
+                onChange={handleChange}
+                placeholder="Enter Passport Number"
+              /></div>
                 </div>
-              
-
               <div className="process-field">
                 <label>Profession</label>
                 <select name="profession" value={formData.profession} onChange={handleChange}>
@@ -304,6 +347,28 @@ useEffect(() => {
           </form>
         </div>
       </div>
+       {loading && (
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(255,255,255,0.7)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: "24px",
+          fontWeight: "bold",
+          zIndex: 1000,
+          backdropFilter: "blur(5px)",
+          WebkitBackdropFilter: "blur(5px)",
+        }}
+      >
+        Loading...
+      </div>
+    )}
     </div>
   );
 };

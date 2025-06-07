@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "../styles/sidebar.css";
+import BeepNotification from "../BeepNotification";
 import ExecutiveActivity from "../features/executive/ExecutiveActivity";
 import { useApi } from "../context/ApiContext";
 import { useAuth } from "../context/AuthContext";
@@ -8,15 +9,16 @@ import { ThemeContext } from "../features/admin/ThemeContext";
 import { useExecutiveActivity } from "../context/ExecutiveActivityContext";
 import useWorkTimer from "../features/executive/useLoginTimer";
 import { useBreakTimer } from "../context/breakTimerContext";
+import { SearchContext } from "../context/SearchContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBars, faHouse, faUserPlus, faUsers, faList, faClock, faCircleXmark,
   faFile, faReceipt, faGear, faArrowLeft, faCircleQuestion, faBell,
   faRobot, faCircleUser, faRightFromBracket, faMugHot, faPersonWalking,
   faBed, faCouch, faUmbrellaBeach, faPeace, faBookOpen, faMusic,
-  faHeadphones, faYinYang, faStopCircle, faPause, faPlay
+  faHeadphones, faYinYang, faStopCircle
 } from "@fortawesome/free-solid-svg-icons";
-
+import { FaPlay,FaPause ,BeepNo} from "react-icons/fa";
 // Break timer icons
 const breakIcons = [
   faMugHot, faPersonWalking, faBed, faCouch,
@@ -29,13 +31,13 @@ const SidebarandNavbar = () => {
   const { user, logout } = useAuth();
   const {
     executiveInfo, executiveLoading, fetchExecutiveData,
-    fetchNotifications, unreadCount
+    fetchNotifications, unreadCount, notifications,markNotificationReadAPI
   } = useApi();
   const { handleStopWork } = useExecutiveActivity();
   const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const location = useLocation();
-
+  const { setSearchQuery } = useContext(SearchContext);
   const [isOpen, setIsOpen] = useState(() => location.pathname.startsWith("/freshlead") || location.pathname.startsWith("/follow-up") || location.pathname.startsWith("/customer") || location.pathname.startsWith("/close-leads"));
   const [isActive, setIsActive] = useState(false);
   const [showTracker, setShowTracker] = useState(false);
@@ -57,55 +59,13 @@ const SidebarandNavbar = () => {
   const historyStackRef = useRef([]);
 
   const toggleSidebar = () => setIsActive(prev => !prev);
-
-  const toggleBreak = () => {
-    if (isBreakRunning) {
-      clearInterval(breakIntervalRef.current);
-      setIsBreakRunning(false);
-      setBreakTime("00:00");
+  const toggle = async () => {
+    if (!isBreakActive) {
+      await startBreak();
     } else {
-      let time = 5 * 60;
-      breakIntervalRef.current = setInterval(() => {
-        time--;
-        const min = String(Math.floor(time / 60)).padStart(2, "0");
-        const sec = String(time % 60).padStart(2, "0");
-        setBreakTime(`${min}:${sec}`);
-        if (time <= 0) {
-          clearInterval(breakIntervalRef.current);
-          setIsBreakRunning(false);
-          setBreakTime("00:00");
-        }
-      }, 1000);
-      setIsBreakRunning(true);
-    }
-  };
-
-  const handleWorkToggle = () => {
-    if (isWorkRunning) {
-      clearInterval(workIntervalRef.current);
-      setIsWorkRunning(false);
-      setWorkTime("00:00");
-    } else {
-      let time = 25 * 60;
-      workIntervalRef.current = setInterval(() => {
-        time--;
-        const min = String(Math.floor(time / 60)).padStart(2, "0");
-        const sec = String(time % 60).padStart(2, "0");
-        setWorkTime(`${min}:${sec}`);
-        if (time <= 0) {
-          clearInterval(workIntervalRef.current);
-          setIsWorkRunning(false);
-          setWorkTime("00:00");
-        }
-      }, 1000);
-      setIsWorkRunning(true);
-    }
-  };
-
-  const handleUserIconClick = async () => {
-    setShowUserPopover(prev => !prev);
-    await fetchExecutiveData();
-  };
+      await stopBreak();
+      }
+    };
 
   const handleLogout = async () => {
     try {
@@ -150,21 +110,12 @@ const SidebarandNavbar = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(event.target) &&
-        userIconRef.current &&
-        !userIconRef.current.contains(event.target)
-      ) {
-        setShowUserPopover(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
 
+// BeepNotification handlers
+const handleDismissBeepNotification = () => {
+  // This function can be used to handle any additional logic when dismissing
+  console.log('BeepNotification dismissed');
+};
   useEffect(() => {
     const currentPath = location.pathname;
     if (!["/login", "/signup"].includes(currentPath)) {
@@ -180,8 +131,15 @@ const SidebarandNavbar = () => {
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
-
+  const handleMarkAllAsRead = () => {
+    // Mark all notifications as read
+    const unreadNotifications = notifications.filter(n => !n.is_read);
+    unreadNotifications.forEach(notification => {
+      markNotificationReadAPI(notification.id);
+    });
+  };
   return (
+    <>
     <section className="sidebar_navbar" data-theme={theme}>
 <section className={`sidebar_container ${isActive ? "active" : ""}`}>
 <button className="menuToggle" onClick={toggleSidebar}><FontAwesomeIcon icon={faBars} /></button>
@@ -250,13 +208,16 @@ const SidebarandNavbar = () => {
       <div className="search_bar">
       <FontAwesomeIcon icon={faArrowLeft} onClick={handleBack} style={{fontSize:"20px",cursor:"pointer",
       }} />
-    <input className="search-input-exec" placeholder="Search" />
-    </div>
+            <input
+                className="search-input-exec"
+                placeholder="Search"
+                onChange={(e) => setSearchQuery(e.target.value)} // ✅ Search handler
+              />    </div>
     </div>
 
     <div className="compact-timer">
       <div className="timer-item">
-        <button className="timer-btn-small"><faPlay /></button>
+        <button className="timer-btn-small"><FaPause /></button>
         <span className="timer-label-small">Work:</span>
         <span className="timer-box-small">{timer}</span>
       </div>
@@ -270,8 +231,8 @@ const SidebarandNavbar = () => {
       </div>
 
       <div className="timer-item">
-        <button className="timer-btn-small" onClick={toggleBreak}>
-        {isBreakActive ? <FontAwesomeIcon icon={faPause} /> : <FontAwesomeIcon icon={faPlay} />}
+        <button className="timer-btn-small" onClick={toggle}>
+        {isBreakActive ? <FaPause />: <FaPlay />}
         </button>
         <span className="timer-label-small">Break:</span>
         <span className="timer-box-small">{breakTimer}</span>
@@ -294,50 +255,49 @@ const SidebarandNavbar = () => {
   )}
 </div>
 
-      <FontAwesomeIcon
-  className="navbar_icon bot_icon"
-  icon={faRobot}
-  onClick={() => {
-    const token = localStorage.getItem("token");
-    if (!token) return alert("Please login again");
-    window.open(`/chatbot?token=${token}`, "_blank");
-  }}
-/>
+      <FontAwesomeIcon className="navbar_icon bot_icon" icon={faRobot} onClick={() => window.open("/chatbot", "_blank")} />
       <div onMouseEnter={() => setShowTracker(true)} onMouseLeave={() => setShowTracker(false)}>
       <FontAwesomeIcon 
-        className="navbar_icon" icon={faClock} title="Toggle Activity Tracker" onClick={() => setShowTracker(prev => !prev)}  /> {showTracker &&<ExecutiveActivity /> }</div>
-            <div 
-        onMouseEnter={() => setShowUserPopover(true)}
-        onMouseLeave={() => setShowUserPopover(false)}
-
-        >
-        <FontAwesomeIcon  
-        className="navbar_icon"
-        icon={faCircleUser}
-        onClick={handleUserIconClick}
-        />
-
-        {showUserPopover && (
-        <div className="user_popover">
-          {executiveLoading ? (
-            <p>Loading user details...</p>
-          ) : (
-            <>
-      <div className="user_details">
-        <div className="user_avatar">{executiveInfo.username?.charAt(0)}</div>
-        <div>
-          <p className="user_name">{executiveInfo.username}</p>
-          <p className="user_role">{executiveInfo.role}</p>
-        </div>
+        className="navbar_icon" icon={faClock} title="Toggle Activity Tracker" onClick={() => setShowTracker(prev => !prev)}  /> {showTracker &&<ExecutiveActivity /> }
       </div>
-      <button className="logout_btn" onClick={handleLogout}>
-        <FontAwesomeIcon icon={faRightFromBracket} style={{ marginRight: "8px" }} /> Logout
-      </button>
-    </>
+        
+      <div
+  className="user-icon-wrapper"
+  ref={popoverRef}
+  // onMouseLeave={() => setShowUserPopover(false)}
+>
+  <FontAwesomeIcon
+    ref={userIconRef}
+    className="navbar_icon"
+    icon={faCircleUser}
+    onClick={() => setShowUserPopover((prev) => !prev)}
+  />
+
+
+  {showUserPopover && (
+    <div className="user_popover">
+      {executiveLoading ? (
+        <p>Loading user details...</p>
+      ) : (
+        <>
+          <div className="user_details">
+            <div className="user_avatar">
+              {executiveInfo.username?.charAt(0)}
+            </div>
+            <div>
+              <p className="user_name">{executiveInfo.username}</p>
+              <p className="user_role">{executiveInfo.role}</p>
+            </div>
+          </div>
+          <button className="logout_btn" onClick={handleLogout}>
+            <FontAwesomeIcon icon={faRightFromBracket} style={{ marginRight: "8px" }} /> Logout
+          </button>
+        </>
+      )}
+    </div>
   )}
 </div>
-)}
-</div>
+
 
     </div>
 
@@ -360,6 +320,13 @@ const SidebarandNavbar = () => {
         </div>
       )}
     </section>
+    <BeepNotification
+    notifications={notifications}
+    unreadCount={unreadCount}
+    onDismissPopup={handleDismissBeepNotification}
+    onMarkAllRead={handleMarkAllAsRead}
+  />
+  </>
   );
 };
 

@@ -10,7 +10,6 @@ import { toast } from "react-toastify";
 import "../../styles/executiveTracker.css";
 import { useExecutiveActivity } from '../../context/ExecutiveActivityContext';
 import useWorkTimer from "./useLoginTimer";
-// import useBreakTimer from "./useTimerBreak";
 import { useApi } from "../../context/ApiContext";
 import { useBreakTimer } from "../../context/breakTimerContext";
 
@@ -22,7 +21,6 @@ const ExecutiveActivity = () => {
    const { executiveInfo, executiveLoading, fetchExecutiveData } = useApi();
    useEffect(() => {
     fetchExecutiveData(); // Call it only once on mount
-    console.log(executiveInfo)
   }, []);
   
   const [callText, setCallText] = useState('Start Call');
@@ -53,7 +51,6 @@ const ExecutiveActivity = () => {
     try {
       setLoading(true);
       const data = await getActivityStatus();
-      console.log("Activity data received:", data);
       setStatus((prev) => ({
         ...prev,
         onBreak: data.onBreak || false,
@@ -90,6 +87,12 @@ const ExecutiveActivity = () => {
     }
   }, [user?.role]);
 
+  useEffect(() => {
+    if (!executiveInfo && !executiveLoading) {
+      fetchExecutiveData(); // only when necessary
+    }
+  }, []);
+  
   const [breakText, setBreakText] = useState("Take Break");
   const toggle= async () => {
     if (!isBreakActive) {

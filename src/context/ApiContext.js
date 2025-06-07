@@ -246,45 +246,6 @@ export const ApiProvider = ({ children }) => {
     }
   };
 
-  // ✅ Executive Dashboard Cards Total Count
-  const [freshLeadsCount, setFreshLeadsCount] = useState(0);
-  const [followUpCount, setFollowUpCount] = useState(0);
-  const [convertedClientsCount, setConvertedClientsCount] = useState(0);
-
-  const fetchFreshLeads = async () => {
-    try {
-      const response = await apiService.fetchFreshLeads();
-      const data = response.data;   
-      const assignedLeads = data.filter(lead => lead.clientLead?.status === "Assigned");
-        setFreshLeadsCount(assignedLeads.length); 
-    } catch (error) {
-      console.error("❌ Failed to fetch fresh leads:", error);
-    }
-  };
-
-  const fetchFollowUps = async () => {
-    try {
-      const response = await apiService.fetchAllFollowUps(); // <-- Corrected here
-      const data = response.data;
-      const followUpLeads = data.filter(lead => lead.clientLeadStatus === "Follow-Up");  
-      setFollowUpCount(followUpLeads.length);
-    } catch (error) {
-      console.error("❌ Failed to fetch follow-up leads:", error);
-    }
-  };
-  
-  const fetchConvertedClients = async () => {
-    try {
-      const response = await apiService.fetchConvertedClients(); 
-      const data = response.data;
-  
-      const convertedClients = data.filter(lead => lead.status === "Converted");  
-      setConvertedClientsCount(convertedClients.length); 
-    } catch (error) {
-      console.error("❌ Failed to fetch converted clients:", error);
-    }
-  };  
-
   // ✅ Fetch Fresh Leads API
   const [freshLeads, setFreshLeads] = useState([]);
   const [freshLeadsLoading, setFreshLeadsLoading] = useState(false);
@@ -356,6 +317,7 @@ export const ApiProvider = ({ children }) => {
     try {
       const data = await apiService.fetchAllFollowUps();
       setFollowUps(data);
+      return data || [];
     } catch (error) {
       console.error("❌ Failed to fetch follow-ups in context:", error);
     } finally {
@@ -417,7 +379,6 @@ export const ApiProvider = ({ children }) => {
 const fetchSettings = async () => {
   try {
     const settings = await apiService.fetchUserSettings();  
-    console.log("User Settings:", settings);
     setUserSettings(settings); 
   } catch (error) {
     console.error("Error fetching user settings:", error);
@@ -428,7 +389,6 @@ const fetchSettings = async () => {
 const updateSettings = async (updatedSettings) => {
   try {
     const updated = await apiService.updateUserSettings(updatedSettings); 
-    console.log("Settings Updated:", updated);
     setUserSettings(updated); 
   } catch (error) {
     console.error("Error updating user settings:", error);
@@ -443,17 +403,46 @@ const refreshMeetings = async () => {
   setMeetings(all);
   return all; 
 }
-const adminMeeting = async () => {
+const adminMeeting = useCallback(async () => {
   try {
-    const meetings = await apiService.adminMeeting();  // This is already the array
-    return meetings;  // Return directly
+    const meetings = await apiService.adminMeeting();
+    return meetings;
   } catch (error) {
     console.error("❌ Error fetching meetings:", error);
     return [];
   }
+}, []);
+
+const [readMeetings, setReadMeetings] = useState(() => {
+  const stored = localStorage.getItem("readMeetings");
+  return stored ? JSON.parse(stored) : {};
+});
+const markMeetingAsRead = (meetingId) => {
+  setReadMeetings((prev) => {
+    const updated = { ...prev, [meetingId]: true };
+    localStorage.setItem("readMeetings", JSON.stringify(updated));
+    return updated;
+  });
 };
+const unreadMeetingsCount = useMemo(() => {
+  return meetings.filter((m) => !readMeetings[m.id]).length;
+}, [meetings, readMeetings]);
 
+// ✅ Preload meetings for global access (for bell icon count)
+useEffect(() => {
+  const preloadMeetings = async () => {
+    try {
+      const data = await adminMeeting(); // already defined
+      setMeetings(data || []);
+    } catch (err) {
+      console.error("❌ Error preloading meetings for unread count:", err);
+    }
+  };
 
+  preloadMeetings();
+}, []);
+
+const [convertedCustomerCount, setConvertedCustomerCount] = useState(0);
 const [convertedClients, setConvertedClients] = useState([]);
 const [convertedClientsLoading, setConvertedClientsLoading] = useState(false);
 // Create a new converted client
@@ -475,6 +464,7 @@ const fetchConvertedClientsAPI = async () => {
     const response = await apiService.fetchConvertedClients(); 
     if (response && response.data && Array.isArray(response.data)) {
       setConvertedClients(response.data); 
+      return response.data;
     } else {
       console.error("❌ No data found in the response");
       setConvertedClients([]); 
@@ -548,6 +538,20 @@ const [opportunitiesLoading, setOpportunitiesLoading] = useState(false);
     }
   };
 
+ const [dealFunnel, setDealFunnel] = useState(null);
+ 
+  const getDealFunnel = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.fetchDealFunnelData();
+      setDealFunnel(data);
+    } catch (error) {
+      console.error("❌ Context error fetching deal funnel:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ✅ Revenue Chart Data State
 const [revenueChartData, setRevenueChartData] = useState([]);
 const [revenueChartLoading, setRevenueChartLoading] = useState(false);
@@ -576,6 +580,154 @@ const updateUserLoginStatus = async (userId, canLogin) => {
     throw error;
     }
   };
+const [verificationResults, setVerificationResults] = useState({});
+const [verificationLoading, setVerificationLoading] = useState(false);
+
+const verifyNumberAPI = async (index, phone) => {
+  setVerificationLoading(true);
+  try {
+    const data = await apiService.verifyNumber(phone);
+    setVerificationResults((prev) => ({
+      ...prev,
+      [index]: data.success
+        ? {
+            name: data.name,
+            location: data.location,
+          }
+        : {
+            error: data.error || "Lookup failed",
+          },
+    }));
+    return data;
+  } catch (error) {
+    console.error("❌ Error verifying number:", error);
+    setVerificationResults((prev) => ({
+      ...prev,
+      [index]: { error: "Network error" },
+    }));
+    return null;
+  } finally {
+    setVerificationLoading(false);
+  }
+};
+// Update Meeting
+const updateMeetingAPI = async (meetingId, updatedData) => {
+  try {
+    const response = await apiService.updateMeeting(meetingId, updatedData);
+    setMeetings((prevMeetings) => {
+      const updatedMeetings = prevMeetings.map((meeting) =>
+        meeting.id === meetingId ? { ...meeting, ...response } : meeting
+      );
+      return updatedMeetings;
+    });
+    return response; // Return the updated meeting data
+  } catch (error) {
+    console.error("❌ Error updating meeting:", error);
+    throw error;
+  }
+};
+const updateClientLeadStatus = async (leadId, status) => {
+  try {
+    const response = await apiService.updateClientLeadStatus(leadId, status);
+    return response;
+  } catch (error) {
+    console.error("❌ Error updating client lead status:", error);
+    throw error;
+  }
+};
+const createExecutive = async (executiveData) => {
+  setLoading(true);
+  
+  try {
+    const result = await apiService.createExecutiveAPI(executiveData);
+    return result;
+  } catch (err) {
+
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+const [followUpClients, setFollowUpClients] = useState([]);
+const [followUpClientsLoading, setFollowUpClientsLoading] = useState(false);
+const fetchFollowUpClientsAPI = async () => {
+  setFollowUpClientsLoading(true);
+  try {
+    const data = await apiService.fetchFollowUpLeadsAPI();
+    setFollowUpClients(data || []);
+    return data || [];
+  } catch (error) {
+    console.error("❌ Error fetching follow-up clients:", error);
+    return [];
+  } finally {
+    setFollowUpClientsLoading(false);
+  }
+};
+const [allClientsLoading, setallClientsLoading] = useState(false);
+const[allClients,setAllClients]=useState();
+  const fetchAllClients= async () => {
+    setallClientsLoading(true);
+    try {
+      const data = await apiService.fetchAllClientLeads(); // already defined in your services
+      setAllClients(data|| [])
+      return data || [];
+    } catch (error) {
+      console.error("❌ Error fetching executive dashboard data:", error);
+      return [];
+    } finally {
+      setallClientsLoading(false);
+    }
+  };
+  
+const createSingleLeadAPI = async (leadData) => {
+  if (!leadData || !leadData.name) {
+    setUploadError("Name is required for lead creation!");
+    throw new Error("Name is required for lead creation!");
+  }
+
+  setUploading(true);
+  setUploadError("");
+  setUploadSuccess("");
+
+  try {
+    const response = await upload.uploadFile(leadData);
+    setUploadSuccess("Lead created successfully!");
+    return response;
+  } catch (error) {
+    setUploadError(error.message || "Failed to create lead!");
+    throw error;
+  } finally {
+    setUploading(false);
+  }
+};
+
+const createTeamLead = async (teamData) => {
+  setLoading(true);
+  
+  try {
+    const result = await apiService.createTeamLeadApi(teamData);
+    return result;
+  } catch (err) {
+
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+const createAdmin = async (adminData) => {
+  setLoading(true);
+  
+  try {
+    const result = await apiService.createAdminApi(adminData);
+    return result;
+  } catch (err) {
+
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
   // ✅ Effect to fetch initial data
   useEffect(() => {
     fetchExecutiveData();
@@ -585,7 +737,6 @@ const updateUserLoginStatus = async (userId, canLogin) => {
     fetchLeadSectionVisitsAPI();
     fetchExecutives();
     fetchAllCloseLeadsAPI();
-    fetchConvertedClients();
     getExecutiveActivity();
     fetchFollowUpHistoriesAPI(); 
     const currentUser = JSON.parse(localStorage.getItem("user"));
@@ -599,7 +750,6 @@ const updateUserLoginStatus = async (userId, canLogin) => {
     const token = localStorage.getItem("token");
   
     if (token && currentUser?.username) {
-      fetchFollowUps();     // ✅ moved here safely
       getAllFollowUps();    // ✅ moved here safely
       fetchFreshLeadsAPI();
     } else {
@@ -612,20 +762,22 @@ const updateUserLoginStatus = async (userId, canLogin) => {
     fetchLeadsAPI: apiService.fetchLeadsAPI,
     fetchAssignedLeads: apiService.fetchAssignedLeads,
     assignLeadAPI: apiService.assignLeadAPI,
-
+    reassignLead:apiService.reassignLead,
     // Executives
     fetchExecutivesAPI: apiService.fetchExecutivesAPI,
     fetchExecutiveInfo: apiService.fetchExecutiveInfo,
-
+    sendEodReport: apiService.sendEodReport,
+    createSingleLeadAPI,
     updateUserLoginStatus,
     // Follow-ups
-    fetchFollowUps,
+    updateClientLeadStatus,
     createFollowUp,
     fetchFreshLeadsAPI,
+    updateMeetingAPI,
     
     createCloseLeadAPI,
     fetchAllCloseLeadsAPI,
-
+ 
     createConvertedClientAPI,
     fetchConvertedClientsAPI,
     // Follow-up Histories
@@ -636,8 +788,8 @@ const updateUserLoginStatus = async (userId, canLogin) => {
  fetchMeetings:    apiService.fetchMeetings,
 
  meetings,
- refreshMeetings
-
+ refreshMeetings,
+ fetchDealFunnelData: apiService.fetchDealFunnelData
   };
 
   return (
@@ -651,39 +803,46 @@ const updateUserLoginStatus = async (userId, canLogin) => {
         // ✅ Executive Info State
         executiveInfo,
         executiveLoading,
+        unreadMeetingsCount,
+        readMeetings,
+        markMeetingAsRead,
+        unreadMeetingsCount,
         fetchExecutiveData,
         createFreshLeadAPI,
         createLeadAPI,
         updateFreshLeadFollowUp,
-        fetchFreshLeads,
         executiveDashboardData,
         executiveDashboardLoading,
         fetchExecutiveDashboardData,
-
         adminMeeting,
+        convertedCustomerCount, // ✅ add this
+    setConvertedCustomerCount, // ✅ and this
         // ✅ Follow-ups
         followUps,
         followUpLoading,
         getAllFollowUps,
         updateFollowUp,
-
+        fetchAllClients,
+        verifyNumberAPI,
+      verificationResults,
+      verificationLoading,
+      followUpClients,
+      followUpClientsLoading,
+      fetchFollowUpClientsAPI,
+      createAdmin,
+        createTeamLead,
         closeLeads, // Add the state for Close Leads
         closeLeadsLoading,
         closeLeadsError,
         
         // ✅ Dashboard Counts
-        freshLeadsCount,
-        followUpCount,
-        convertedClientsCount,
-        fetchFollowUps,
-        fetchConvertedClients,
         convertedClients,        
         convertedClientsLoading,
         // ✅ Fresh Leads
         freshLeads,
         freshLeadsLoading,
         fetchFreshLeadsAPI,
-
+        createExecutive,
         // ✅ Notifications
         notifications,
         notificationsLoading,
@@ -730,11 +889,13 @@ const updateUserLoginStatus = async (userId, canLogin) => {
         // ✅ Executive Activity
         activityData,
         getExecutiveActivity,
-
+        fetchConvertedClientsAPI,
+        
         opportunities,
         opportunitiesLoading,
         fetchOpportunitiesData,
-
+        getDealFunnel,
+        dealFunnel,
         // ✅ Follow-up Histories
         followUpHistories,
         followUpHistoriesLoading,

@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { FaCoffee, FaBriefcase, FaPhone } from "react-icons/fa";
 import { useApi } from "../../context/ApiContext";
-import axios from "axios";
 
 const ExecutiveActi = ({ selectedExecutiveId, executiveName }) => {
+  const { fetchExecutiveDashboardData } = useApi();
   const [activityData, setActivityData] = useState({
     workTime: 0,
     breakTime: 0,
     callTime: 0,
   });
-  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const FULL_DAY_SECONDS = 8 * 3600;
 
@@ -23,27 +22,46 @@ const ExecutiveActi = ({ selectedExecutiveId, executiveName }) => {
   };
 
   useEffect(() => {
-    const fetchActivity = async () => {
-      if (!selectedExecutiveId || !selectedDate) return;
-      const formattedDate = selectedDate.toISOString().split("T")[0];
+    const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `/api/executiveActivity/activity-by-date?ExecutiveId=${selectedExecutiveId}&date=${formattedDate}`
-        );
-        const data = res.data.activity || {};
+        const allData = await fetchExecutiveDashboardData();
+        let workTime = 0;
+        let breakTime = 0;
+        let callTime = 0;
+
+        if (selectedExecutiveId) {
+          // Fetch data for a specific executive
+          const executiveData = allData.find(
+            (exec) => exec.ExecutiveId === selectedExecutiveId
+          );
+
+          if (executiveData) {
+            workTime = executiveData.workTime || 0;
+            breakTime = executiveData.breakTime || 0;
+            callTime = executiveData.dailyCallTime || 0;
+          }
+        } else {
+          // Aggregate data for all executives
+          allData.forEach((exec) => {
+            workTime += exec.workTime || 0;
+            breakTime += exec.breakTime || 0;
+            callTime += exec.dailyCallTime || 0;
+          });
+        }
+
         setActivityData({
-          workTime: data.workTime || 0,
-          breakTime: data.breakTime || 0,
-          callTime: data.dailyCallTime || 0,
+          workTime,
+          breakTime,
+          callTime,
         });
       } catch (error) {
-        console.error("Error fetching executive activity:", error);
+        console.error("Error fetching activity data:", error);
         setActivityData({ workTime: 0, breakTime: 0, callTime: 0 });
       }
     };
 
-    fetchActivity();
-  }, [selectedExecutiveId, selectedDate]);
+    fetchData();
+  }, [selectedExecutiveId]);
 
   const activitiesRaw = [
     { name: "Break Time", value: activityData.breakTime, icon: <FaCoffee />, color: "#8b5cf6" },
@@ -59,32 +77,11 @@ const ExecutiveActi = ({ selectedExecutiveId, executiveName }) => {
 
   return (
     <div className="exec-activity">
-      <h2
-        className="exec-section-title"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <span>Executive Activity</span>
-          <span className="executive-name">{executiveName || "Loading..."}</span>
-        </div>
-        <input
-          type="date"
-          className="activity-calendar-input"
-          value={selectedDate.toISOString().split("T")[0]}
-          onChange={(e) => setSelectedDate(new Date(e.target.value))}
-          style={{
-            fontSize: "14px",
-            padding: "4px 8px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        />
+      <h2 className="exec-section-title">
+        Executive Activity:{" "}
+        <span className="executive-name">
+          {executiveName || "Loading..."}
+        </span>
       </h2>
 
       {activities.map((activity, index) => (

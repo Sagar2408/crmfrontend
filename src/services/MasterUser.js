@@ -1,9 +1,8 @@
 // src/services/MasterUser.js
 import axios from "axios";
-
 // ✅ Create Axios instance specific to master user authentication
 const authApi = axios.create({
-  baseURL: "https://crmbackend-yho0.onrender.com/api", // Replace with env var in production
+  baseURL: "https://crm-backend-production-c208.up.railway.app/api", // Replace with env var in production
   headers: {
     "Content-Type": "application/json",
   },
@@ -48,7 +47,7 @@ export const logoutMasterUser = async () => {
       {},
       {
         headers: {
-          'x-company-id': "ab-cd",
+          'x-company-id': "0aa80c0b-0999-4d79-8980-e945b4ea700d",
           Authorization: `Bearer ${token}`, // ✅ Securely attached token
         },
       }
@@ -60,5 +59,11 @@ export const logoutMasterUser = async () => {
   }
 };
 
+// ✅ Public Route Wrapper for Master User Pages
+// export const MasterPublicRoute = ({ children }) => {
+//   const masterToken = localStorage.getItem("masterToken");
 
+//   // If already logged in, redirect to actual dashboard URL
+//   return masterToken ? <Navigate to="/dashboard" replace /> : children;
+// };
 

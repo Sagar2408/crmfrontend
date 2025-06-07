@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://crmbackend-yho0.onrender.com/api';
+const API_BASE_URL = 'https://crm-backend-production-c208.up.railway.app/api';
 
 // Get token from localStorage
 const getToken = () => localStorage.getItem('token');
@@ -9,7 +9,7 @@ const getToken = () => localStorage.getItem('token');
 const getHeaders = () => ({
   'Content-Type': 'application/json',
   'Authorization': `Bearer ${getToken()}`,
-  'x-company-id': 'ab-cd', // ⬅️ Hardcoded company ID
+  'x-company-id': '0aa80c0b-0999-4d79-8980-e945b4ea700d', // ⬅️ Hardcoded company ID
 });
 
 /**
@@ -180,7 +180,6 @@ export const leadtrackVisit = async (executiveId) => {
       { ExecutiveId: executiveId },
       { headers: getHeaders() }
     );
-    console.log('Lead visit tracked:', response.data);
   } catch (error) {
     if (error.response) {
       console.error('API error:', error.response.data.message);
@@ -216,5 +215,26 @@ export const sendEmail = async ({
   } catch (error) {
     console.error("Failed to send email:", error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Failed to send email');
+  }
+};
+export const getAttendance = async (startDate, endDate) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/executive-activities/attendance`,
+      {
+        headers: getHeaders(),
+        params: {
+          startDate, // pass raw string YYYY-MM-DD
+          endDate,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      console.error("API error:", error.response.data.message);
+    } else {
+      console.error("Network error:", error.message);
+    }
   }
 };

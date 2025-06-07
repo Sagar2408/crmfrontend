@@ -12,12 +12,21 @@ const ProcessNavbar = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate("/process/client/login");
+  
+      const userType = localStorage.getItem("userType");
+  
+      if (userType === "customer") {
+        navigate("/customer/client/login");
+      } else if (userType === "processperson") {
+        navigate("/process/client/login");
+      } else {
+        // Fallback if userType is not set or unknown
+        navigate("/");
+      }
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
-
   const dashboardTitle = user?.type === 'processperson' ? 'Process Dashboard' : 'Client Dashboard';
 
   return (
@@ -28,9 +37,15 @@ const ProcessNavbar = () => {
         className={isMobile ? "process-nav-links-mobile" : "process-nav-links"}
         onClick={() => setIsMobile(false)}
       >
-        <li><Link to="/process/client/dashboard">Dashboard</Link></li>
+        {user?.type === "customer" && (
+          <li><Link to="/process/client/dashboard">Dashboard</Link></li>
+        )}
         <li><Link to="/process/client/upload">Upload</Link></li>
-        <li><Link to="/process/client/settings">Settings</Link></li>
+         {/* ✅ Only show this link to processperson */}
+          {user?.type === 'processperson' && (
+            <li><Link to="/process/client/all-clients">Clients</Link></li>
+          )}
+          <li><Link to="/process/client/settings">Settings</Link></li>
         <li><button className="process-logout-btn" onClick={handleLogout}>Logout</button></li>
       </ul>
 

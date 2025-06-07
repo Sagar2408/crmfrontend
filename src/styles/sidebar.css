@@ -17,10 +17,8 @@
   background-color: #1e90ff; /* Blue - Dashboard */
   border-radius: 12px;
 }
-.sidebar_heading {
-  padding: 20px;
-}
-.sidebar-toggle-btn {
+
+/* .sidebar-toggle-btn {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -29,7 +27,7 @@
   font-size: 24px;
   cursor: pointer;
   z-index: 1001;
-}
+} */
 
 
 .sidebar_heading h1 {
@@ -37,6 +35,7 @@
   margin: auto;
   text-align: center;
   font-weight: bold;
+  padding-top: 30px;
 }
 
 .sidebar_crm {
@@ -67,7 +66,6 @@
 }
 .submenu_nav {
   margin-right: 0;
-  background-color: var(--sidebar-bg);
   margin-bottom: 20px;
   width: 100%;
   padding-left: 20px;
@@ -248,7 +246,7 @@
 }
 .user_popover {
   position: absolute;
-  top: 60px; /* match or exceed navbar height */
+  top: 50px; /* match or exceed navbar height */
   right: 0px;
   left:85%;
   width: 250px;
@@ -680,8 +678,6 @@ margin-top:0px;
 .sidebar_crm {
   color: #ffffff;
 }
-
-/* Optional: add subtle border to visually separate */
 .sidebar_nav {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }

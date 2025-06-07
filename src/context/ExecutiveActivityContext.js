@@ -9,6 +9,7 @@ import {
   getActivityStatus,
   leadtrackVisit,
   sendEmail,
+  getAttendance
 } from '../services/executiveService';
 
 // 1. Create Context
@@ -113,7 +114,6 @@ export const ExecutiveActivityProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await recordStartBreak();
-      console.log("Break started:", response?.activity?.breakStartTime);
       setStatus((prev) => ({ ...prev, breakActive: true }));
     } catch (error) {
       console.error("❌ Error starting break:", error.message);
@@ -126,7 +126,6 @@ export const ExecutiveActivityProvider = ({ children }) => {
     try {
       setLoading(true);
       const data = await recordStopBreak();
-      console.log("Break duration:", data?.breakDuration);
       setStatus((prev) => ({ ...prev, breakActive: false }));
       return data.breakDuration;
     } catch (error) {
@@ -207,6 +206,17 @@ export const ExecutiveActivityProvider = ({ children }) => {
     }
   };
 
+  const handleGetAttendance = async (startDate, endDate) => {
+    try {
+      setLoading(true);
+      const data = await getAttendance(startDate, endDate);
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching attendance:", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
   // ---------------------------------------
   // Provider Return
   // ---------------------------------------
@@ -226,6 +236,8 @@ export const ExecutiveActivityProvider = ({ children }) => {
         handleEndCall,
         handleSendEmail,
         leadtrack,
+        handleGetAttendance,
+        
       }}
     >
       {children}

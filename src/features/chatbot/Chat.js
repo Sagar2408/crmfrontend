@@ -2,26 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { FaMicrophone, FaPaperPlane, FaUser, FaStopCircle } from "react-icons/fa";
 import { MdSmartToy } from "react-icons/md";
 import { BsRecordCircle } from "react-icons/bs";
-import { jwtDecode } from "jwt-decode";
-
-// Extract token from URL
-const token = new URLSearchParams(window.location.search).get("token");
-
-let executiveId = null;
-let executiveName = null;
-
-if (token) {
-  try {
-    const decoded = jwtDecode(token);
-    executiveId = decoded.id;
-    executiveName = decoded.name;
-    console.log("✅ Executive identified:", executiveId, executiveName);
-  } catch (err) {
-    console.error("❌ Invalid token:", err);
-  }
-} else {
-  console.warn("⚠️ No token found in URL");
-}
 
 const Chat = ({ isCallActive }) => {
   const [messages, setMessages] = useState([]);
@@ -42,8 +22,11 @@ const Chat = ({ isCallActive }) => {
   }, [messages]);
 
   const handleMicClick = () => {
-    if (isListening) stopSpeechRecognition();
-    else startSpeechRecognition();
+    if (isListening) {
+      stopSpeechRecognition();
+    } else {
+      startSpeechRecognition();
+    }
   };
 
   const startSpeechRecognition = () => {
@@ -58,15 +41,26 @@ const Chat = ({ isCallActive }) => {
     recognitionRef.current.interimResults = true;
     recognitionRef.current.lang = "en-US";
 
-    recognitionRef.current.onstart = () => setIsListening(true);
+    recognitionRef.current.onstart = () => {
+      setIsListening(true);
+    };
+
     recognitionRef.current.onresult = (event) => {
       let transcript = event.results[event.results.length - 1][0].transcript.trim();
       setUserInput(transcript);
-      if (event.results[event.results.length - 1].isFinal) handleSend(transcript);
+      if (event.results[event.results.length - 1].isFinal) {
+        handleSend(transcript);
+      }
     };
-    recognitionRef.current.onerror = (event) => console.error("Speech recognition error:", event.error);
+
+    recognitionRef.current.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+    };
+
     recognitionRef.current.onend = () => {
-      if (!isCallActive && isListening) recognitionRef.current.start();
+      if (!isCallActive && isListening) {
+        recognitionRef.current.start();
+      }
     };
 
     recognitionRef.current.start();
@@ -88,9 +82,12 @@ const Chat = ({ isCallActive }) => {
     setIsTyping(true);
 
     try {
-      const response = await fetch("https://crmbackend-yho0.onrender.com/api/chatbot", {
+      const response = await fetch("https://crm-backend-production-c208.up.railway.app/api/chatbot", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-company-id": "0aa80c0b-0999-4d79-8980-e945b4ea700d",  // <-- Add this line
+        },
         body: JSON.stringify({ prompt: input }),
       });
       const data = await response.json();
@@ -111,49 +108,28 @@ const Chat = ({ isCallActive }) => {
         mediaRecorderRef.current = new MediaRecorder(stream);
 
         mediaRecorderRef.current.ondataavailable = (e) => {
-          if (e.data.size > 0) recordChunksRef.current.push(e.data);
+          if (e.data.size > 0) {
+            recordChunksRef.current.push(e.data);
+          }
         };
 
-        mediaRecorderRef.current.onstop = async () => {
+        mediaRecorderRef.current.onstop = () => {
           const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
-
-          // OPTIONAL: Local download
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
           a.download = `call_recording_${Date.now()}.webm`;
           a.click();
           URL.revokeObjectURL(url);
-
-          // Upload to backend
-          if (executiveId && executiveName) {
-            const formData = new FormData();
-            formData.append("recording", blob);
-            formData.append("executiveId", executiveId);
-            formData.append("executiveName", executiveName);
-            formData.append("duration", recordTime);
-
-            try {
-              const res = await fetch("https://crmbackend-yho0.onrender.com/api/upload-recording", {
-                method: "POST",
-                body: formData,
-              });
-              const data = await res.json();
-              console.log("✅ Uploaded to backend:", data);
-            } catch (err) {
-              console.error("❌ Upload failed:", err);
-            }
-          }
-
           recordChunksRef.current = [];
         };
 
         mediaRecorderRef.current.start();
         setIsRecording(true);
         setRecordTime(0);
-        timerRef.current = setInterval(() => setRecordTime((t) => t + 1), 1000);
+        timerRef.current = setInterval(() => setRecordTime((time) => time + 1), 1000);
       } catch (err) {
-        console.error("Error accessing mic:", err);
+        console.error("Error accessing microphone:", err);
       }
     } else {
       mediaRecorderRef.current?.stop();

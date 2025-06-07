@@ -1,34 +1,61 @@
 import React, { useEffect, useState } from "react";
 import { FaUserFriends, FaEllipsisV } from "react-icons/fa";
-import { useApi } from "../../context/ApiContext"; // Ensure the correct path for your context
+import { useApi } from "../../context/ApiContext";
 
-const Meetings = () => {
-  const { adminMeeting } = useApi(); // Get the function from context
-
-  const [meetings, setMeetings] = useState([]);  // Default as an empty array
+const Meetings = ({ selectedExecutiveId }) => {
+  const { adminMeeting, fetchExecutivesAPI } = useApi();
+  const [meetings, setMeetings] = useState([]);
   const [meetingsLoading, setMeetingsLoading] = useState(false);
+  const [executives, setExecutives] = useState([]);
 
+  // Fetch executives when the component mounts
   useEffect(() => {
-    const fetchMeetings = async () => {
+    const fetchExecutives = async () => {
+      try {
+        const execData = await fetchExecutivesAPI();
+        console.log("Fetched executives:", execData);
+        setExecutives(Array.isArray(execData) ? execData : []);
+      } catch (error) {
+        console.error("❌ Error fetching executives:", error);
+        setExecutives([]);
+      }
+    };
+
+    fetchExecutives();
+  }, [fetchExecutivesAPI]);
+
+  // Fetch meetings when selectedExecutiveId changes
+  useEffect(() => {
+    const fetchMeetingsData = async () => {
       setMeetingsLoading(true);
       try {
-        const data = await adminMeeting();     
-        if (Array.isArray(data)) {
-          setMeetings(data);  // Set the meetings array if data is valid
+        const allMeetings = await adminMeeting();
+        console.log("Fetched meetings:", allMeetings);
+        console.log("Selected Executive ID:", selectedExecutiveId);
+        if (Array.isArray(allMeetings)) {
+          if (selectedExecutiveId && selectedExecutiveId !== "all") {
+            const filteredMeetings = allMeetings.filter(
+              (meeting) => String(meeting.executiveId) === selectedExecutiveId
+            );
+            console.log("Filtered meetings:", filteredMeetings);
+            setMeetings(filteredMeetings);
+          } else {
+            setMeetings(allMeetings);
+          }
         } else {
-          console.error("Invalid data format:", data);  // Log error if data is not valid
-          setMeetings([]);  // Fallback to empty array if data is not valid
+          console.error("Invalid data format from adminMeeting:", allMeetings);
+          setMeetings([]);
         }
       } catch (error) {
         console.error("❌ Error fetching meetings:", error);
-        setMeetings([]);  // Fallback to an empty array if there's an error
+        setMeetings([]);
       } finally {
         setMeetingsLoading(false);
       }
-    };    
+    };
 
-    fetchMeetings();
-  }, []);  // Dependency array to fetch only once
+    fetchMeetingsData();
+  }, [selectedExecutiveId]);
 
   if (meetingsLoading) {
     return <div className="meetings-container">Loading meetings...</div>;
@@ -36,43 +63,50 @@ const Meetings = () => {
 
   const meetingsCount = Array.isArray(meetings) ? meetings.length : 0;
 
+  const getTitle = () => {
+    if (selectedExecutiveId && selectedExecutiveId !== "all") {
+      return `${meetingsCount} Executive Meetings`;
+    }
+    return `${meetingsCount} Meetings`;
+  };
+
+  // Function to get executive name by ID
+  const getExecutiveName = (executiveId) => {
+    const executive = executives.find((exec) => String(exec.id) === String(executiveId));
+    return executive ? executive.username : "Unknown Executive";
+  };
+
   return (
     <div className="meetings-container">
-      <h3 className="chart-title">{meetingsCount} Meetings</h3>
+      <h3 className="chart-title">{getTitle()}</h3>
       {meetingsCount === 0 ? (
-        <div>No meetings scheduled for today.</div>
+        <div>No meetings scheduled.</div>
       ) : (
-        meetings.map((meeting, index) => {
-          // Conditional classes for title and time
-          let titleClass = "";
-          let timeClass = "";
-
-          if (index === 1) {
-            titleClass = "meeting-title-dark-only";
-            timeClass = "meeting-time-dark-only";
-          } else if (meeting.title === "External Meeting - Negotiation") {
-            titleClass = "meeting-title-special";
-            timeClass = "meeting-time-special";
-          }
-
-          return (
-            <div
-              key={index}
-              className={`meeting-card card-hover-${index} ${meeting.isUpcoming ? "upcoming" : ""}`}
-            >
-              <div className="meeting-details">
-                <h4 className={titleClass}>{meeting.clientName}</h4> {/* Replace title with clientName */}
-                <p className={timeClass}>{new Date(meeting.startTime).toLocaleString()}</p> {/* Format the time */}
-              </div>
-              <div className="meeting-icons">
-                <FaUserFriends className="icon" />
-                <FaUserFriends className="icon" />
-                <FaUserFriends className="icon" />
-                <FaEllipsisV className="icon" />
-              </div>
+        meetings.map((meeting, index) => (
+          <div
+            key={meeting.id}
+            className={`meeting-card ${meeting.isUpcoming ? "upcoming" : ""} card-hover-${index % 5}`}
+          >
+            <div className="meeting-details">
+              <h4>{meeting.clientName}</h4>
+              <p>{new Date(meeting.startTime).toLocaleString()}</p>
             </div>
-          );
-        })
+            <div className="meeting-icons">
+              {selectedExecutiveId === "all" ? (
+                <span className="executive-name">
+                  {getExecutiveName(meeting.executiveId)}
+                </span>
+              ) : (
+                <>
+                  <FaUserFriends className="icon" />
+                  <FaUserFriends className="icon" />
+                  <FaUserFriends className="icon" />
+                </>
+              )}
+              <FaEllipsisV className="icon" />
+            </div>
+          </div>
+        ))
       )}
     </div>
   );

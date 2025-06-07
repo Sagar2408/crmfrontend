@@ -1,9 +1,7 @@
-import React, { useEffect } from 'react';
-import ReportCard from "../features/executive/ReportCard";
+import React from 'react';
+import { Outlet } from 'react-router-dom';
 import SidebarandNavbar from "../layouts/SidebarandNavbar";
 import "../styles/executive.css";
-import NewsComponent from '../features/executive/NewsComponent';
-import { recordStartWork, recordStopWork } from "../services/executiveService"; // ✅ Import stopWork also
 
 const ExecutiveLayout = () => {  
   return (
@@ -12,8 +10,7 @@ const ExecutiveLayout = () => {
       <div className="executive-main-content">
         <div className="dashboard-container">
           <div className="dashboard-main-content">
-            <ReportCard />
-            <NewsComponent />
+            <Outlet /> {/* 👈 This is now where ReportCard + NewsComponent will render */}
           </div>
         </div>
       </div>

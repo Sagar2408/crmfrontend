@@ -1,8 +1,8 @@
 .admin-notification-wrapper {
-    max-width: 1000px;
-    margin: 2rem auto;
+    max-width: 1300px;
+    margin: 1rem auto;
     padding: 1.5rem;
-    background-color: #f9fafb;
+    background: rgba(247, 247, 247, 0.75);
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
@@ -111,7 +111,7 @@
   
   .admin-notification-pagination-btn {
     padding: 0.5rem 1rem;
-    background-color: #4299e1;
+    background-color: var(--tab-active);
     color: white;
     border: none;
     border-radius: 4px;
@@ -190,3 +190,29 @@
       gap: 1rem;
     }
   }
+  .admin-tab-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .admin-tab-btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    background-color: #e2e8f0;
+    color: #2d3748;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .admin-tab-btn:hover {
+    background-color: #cbd5e0;
+  }
+  
+  .admin-tab-btn.active {
+    background-color: var(--tab-active); /* violet */
+    color: #fff;
+  }
+  

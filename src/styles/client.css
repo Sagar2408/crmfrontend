@@ -6,7 +6,6 @@
   --accent-color-hover: #3730a3;
 }
 
-
 * {
   margin: 0;
   padding: 0;
@@ -21,14 +20,14 @@
   height: 100vh;
   background-color: var(--bg-color);
 }
-
 .client-app-container {
   display: flex;
-  height: 100vh;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow: auto; /* allows scroll */
 }
-
 .client-main-content {
-  position: absolute;
+  position: relative;
   top: 60px;
   left: 250px;
   width: calc(100% - 250px);
@@ -36,7 +35,15 @@
   padding: 20px;
   background-color: var(--card-bg);
   color: var(--text-color);
-  overflow: auto;
+  overflow-y: scroll; /* allow vertical scrolling */
+  overflow-x: hidden; /* prevent horizontal scroll if not needed */
+
+  /* Hide scrollbar in all major browsers */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
+}
+.client-main-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 /* === COMMON STYLES === */
@@ -81,7 +88,10 @@
 .heading {
   margin-left: 45px;
 }
+.heading h2{
+  margin-top: -15px;
 
+}
 .report-cards {
   display: flex;
   flex-direction: row;
@@ -205,13 +215,6 @@
   font-size: 18px;
   font-weight: 400;
 }
-
-.c-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-}
 .interaction-datetime{
   margin-top: 30px;
 }
@@ -255,17 +258,22 @@ h2, h3, h4 {
 textarea,
 input,
 select {
-  background-color: var(--input-bg);
   color: var(--text-color);
   border: 1px solid var(--border-color);
 }
 
 /* === CLIENT INTERACTIONS & FOLLOW-UP === */
-.client-interaction-container,
 .followup-detail-container {
   background-color: var(--card-bg);
-  padding: 30px;
-  margin-top: 40px;
+  padding: 10px;
+  margin-top: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+.client-interaction-container{
+  background-color: var(--card-bg);
+  padding: 20px;
+  margin-top: 30px;
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
@@ -292,7 +300,9 @@ select {
   font-weight: 400;
   display: block;
 }
-
+.interaction-field{
+  margin-top: -15px;
+}
 .textarea-with-speech {
   display: flex;
   align-items: flex-start;

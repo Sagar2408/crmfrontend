@@ -1,4 +1,5 @@
 
+
 :root {
   /* Light Theme Defaults */
   --bg-color: #f9fafb;
@@ -52,7 +53,6 @@
 /* BASE STYLES */
 .admin-settings {
   width: 100%;
-  padding: 2rem 3rem;
   background: var(--bg-color);
   color: var(--text-color);
   display: flex;
@@ -60,27 +60,24 @@
   min-height: 100vh;
   box-sizing: border-box;
   transition: margin-left 0.3s ease, width 0.3s ease;
-  
 }
 
 /* Sidebar State Adjustments */
 body.sidebar-expanded .admin-settings {
   margin-left: 150px;
   width: calc(100% - 250px);
-  padding-left: 0 /* Reduced from 3rem */
+  padding-left: 0;
 }
 
 body.sidebar-collapsed .admin-settings {
   margin-left: 80px;
   width: calc(100% - 80px);
-  padding-left: 1.5rem; /* Reduced from 3rem */
+  padding-left: 1.5rem;
 }
 
-/* ==================== */
 /* HEADER STYLES */
-/* ==================== */
 .settings-header {
-  padding-left: 0; /* Remove extra padding */
+  padding-left: 0;
   margin-left: -0.5rem; 
   display: flex;
   align-items: center;
@@ -97,11 +94,7 @@ body.sidebar-collapsed .admin-settings {
   color: var(--text-color);
 }
 
-
-
-/* ==================== */
 /* TAB NAVIGATION */
-/* ==================== */
 .settings-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -130,9 +123,7 @@ body.sidebar-collapsed .admin-settings {
   color: var(--btn-text);
 }
 
-/* ==================== */
 /* MAIN CONTENT CARD */
-/* ==================== */
 .settings-card {
   background: var(--card-bg);
   padding: 2.5rem 3rem;
@@ -153,9 +144,27 @@ body.sidebar-collapsed .admin-settings {
   color: var(--text-color);
 }
 
-/* ==================== */
+/* ACCESS CONTROL SECTIONS */
+.access-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.access-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.access-section h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
 /* FORM STYLES */
-/* ==================== */
 .profile-form {
   width: 100%;
   display: flex;
@@ -256,9 +265,7 @@ body.sidebar-collapsed .admin-settings {
   color: var(--btn-text);
 }
 
-/* ==================== */
 /* BUTTON STYLES */
-/* ==================== */
 .save-btn, 
 .primary-btn {
   background-color: var(--primary-color);
@@ -293,18 +300,8 @@ body.sidebar-collapsed .admin-settings {
   color: var(--btn-text);
 }
 
-/* ==================== */
 /* SECTION BLOCKS */
-/* ==================== */
-.section-block {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
+
 
 /* Lists */
 .team-list,
@@ -347,10 +344,44 @@ body.sidebar-collapsed .admin-settings {
   font-weight: 600;
 }
 
-/* ==================== */
 /* RESPONSIVE ADJUSTMENTS */
-/* ==================== */
+@media (min-width: 1200px) {
+  body.sidebar-expanded .admin-settings {
+    margin-left: 20px;
+    width: calc(100% - 20px);
+    padding-left: 0.1rem;
+    padding-right: 1.5rem;
+  }
+  
+  body.sidebar-collapsed .admin-settings {
+    margin-left: 10px;
+    width: calc(100% - 10px);
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .admin-settings {
+    padding: 2rem;
+  }
+  
+  .settings-card {
+    padding: 2rem;
+  }
+}
+
 @media (max-width: 1200px) {
+  body.sidebar-expanded .admin-settings {
+    margin-left: 20px;
+    width: calc(100% - 20px);
+    padding-left: 0.1rem;
+    padding-right: 1.5rem;
+  }
+  
+  body.sidebar-collapsed .admin-settings {
+    margin-left: 10px;
+    width: calc(100% - 10px);
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
   .admin-settings {
     padding: 2rem;
   }
@@ -362,21 +393,18 @@ body.sidebar-collapsed .admin-settings {
 
 @media (max-width: 992px) {
   body.sidebar-expanded .admin-settings {
-    margin-left: 250px;
-    width: calc(100% - 250px);
-    padding-left: 0.1rem; /* reduced from 1.5rem */
-    padding-right: 1.5rem; /* keep right padding normal */
+    margin-left: 20px;
+    width: calc(100% - 20px);
+    padding-left: 0.1rem;
+    padding-right: 1.5rem;
   }
   
-
   body.sidebar-collapsed .admin-settings {
-    margin-left: 80px;
-    width: calc(100% - 80px);
-    padding-left: 1rem; /* reasonable */
+    margin-left: 10px;
+    width: calc(100% - 10px);
+    padding-left: 1rem;
     padding-right: 1rem;
   }
-  
-  
   
   .sidebar-toggle-btn {
     width: 42px;
@@ -392,9 +420,7 @@ body.sidebar-collapsed .admin-settings {
     font-size: 1.3rem;
     padding: 0.6rem;
   }
-}
 
-@media (max-width: 768px) {
   .admin-settings {
     padding: 1.5rem;
   }
@@ -454,3 +480,254 @@ body.sidebar-collapsed .admin-settings {
     overflow-x: auto;
   }
 }
+
+/* Access Control Table Styles */
+.access-control-table {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  background-color: var(--table-header);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.header-cell {
+  flex: 1;
+  padding: 1rem;
+  text-align: center;
+}
+
+.header-cell:first-child {
+  flex: 2;
+  text-align: left;
+}
+
+.table-row {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.row-cell {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row-cell.functionality {
+  flex: 2;
+  justify-content: flex-start;
+  font-weight: 500;
+}
+
+/* Toggle Switch Styles */
+/* Functionality Group Styles */
+.functionality-group {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.functionality-group:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.group-title {
+  padding: 0.75rem 1rem;
+  background-color: var(--table-header);
+  font-weight: 600;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Toggle Switch Component */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .slider {
+  background-color: var(--primary-color);
+}
+
+.toggle-switch input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+  /* center icon */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+}
+
+.slider:before {
+  display: none;
+}
+
+input:checked + .slider {
+  background-color: var(--primary-color);
+}
+
+/* input:checked + .slider:before {
+  transform: translateX(26px);
+} */
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .header-cell, .row-cell {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .toggle-switch {
+    width: 40px;
+    height: 20px;
+  }
+  
+  .slider:before {
+    height: 14px;
+    width: 14px;
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(20px);
+  }
+}
+
+/*-------------------Blur overlay-------------------*/
+.blur-overlay-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 300px; /* ensures visual height even if content is short */
+}
+
+.blur-overlay-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100%;
+  backdrop-filter: blur(4px);
+  background-color: rgba(255, 255, 255, 0.6); /* for light mode */
+  z-index: 2;
+  pointer-events: all;
+  border-radius: 12px;
+}
+
+.blur-overlay-wrapper.dark::after {
+  background-color: rgba(31, 41, 55, 0.4); /* for dark mode */
+}
+.blur-overlay-wrapper.dark::after {
+  background-color: rgba(31, 41, 55, 0.5);
+}
+/* Fix dark mode text visibility only for settings page */
+[data-theme="dark"] .admin-settings h3,
+[data-theme="dark"] .admin-settings h2,
+[data-theme="dark"] .admin-settings label,
+[data-theme="dark"] .admin-settings input,
+[data-theme="dark"] .admin-settings textarea,
+[data-theme="dark"] .admin-settings select,
+[data-theme="dark"] .admin-settings button,
+[data-theme="dark"] .admin-settings small,
+[data-theme="dark"] .admin-settings .form-group,
+[data-theme="dark"] .admin-settings .row-cell,
+[data-theme="dark"] .admin-settings .header-cell,
+[data-theme="dark"] .admin-settings .group-title,
+[data-theme="dark"] .admin-settings .mini-btn,
+[data-theme="dark"] .admin-settings .save-btn,
+[data-theme="dark"] .admin-settings .primary-btn {
+  color: whitesmoke !important;
+}
+
+/* Make action buttons inside profile image section dark-safe */
+[data-theme="dark"] .admin-settings .pic-actions button {
+  color: black !important;
+}
+
+/* Make form input text black inside settings in dark mode */
+[data-theme="dark"] .admin-settings .form-group input {
+  color: black !important;
+}
+[data-theme="dark"] .admin-settings input::placeholder,
+[data-theme="dark"] .admin-settings textarea::placeholder {
+  color: #adb0b2; /* soft light gray for dark background */
+}
+
+/* Improve input field contrast */
+[data-theme="dark"] .admin-settings input,
+[data-theme="dark"] .admin-settings textarea,
+[data-theme="dark"] .admin-settings select {
+  background-color: rgba(74, 85, 104, 0.8);
+  border-color: var(--input-border);
+}
+
+/* Improve hover state of mini buttons */
+[data-theme="dark"] .admin-settings .mini-btn:hover {
+  background-color: var(--primary-color);
+  color: var(--btn-text);
+}
+
+

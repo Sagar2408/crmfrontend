@@ -13,9 +13,11 @@ const ClientLogin = () => {
     try {
       await login(email, password);
       alert("Login successful!");
-
-      // ✅ Navigate to dashboard
-      navigate("/process/client/dashboard");
+  
+      localStorage.setItem("userType", "processperson");
+  
+        navigate("/process/client/all-clients");
+  
     } catch (error) {
       alert(error.message);
     }

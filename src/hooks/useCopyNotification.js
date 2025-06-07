@@ -7,16 +7,15 @@ const useCopyNotification = (createCopyNotification, fetchNotifications) => {
     if (!user || !user.id || !user.role) return;
 
     const userId = user.id;
-    const userRole = user.role; // 'admin' or 'executive'
+    const userRole = user.role;
+    const username = user.username;
 
     const handleCopy = () => {
       const copiedText = window.getSelection().toString().trim();
       if (!copiedText) return;
 
-      const message = `Copied: "${copiedText.slice(0, 100)}"`;
-
+      const message = `${username} Copied: "${copiedText.slice(0, 100)}"`;
       createCopyNotification(userId, userRole, message);
-      console.log(`userId: ${userId}, role: ${userRole}, message: ${message}`);
     };
 
     document.addEventListener("copy", handleCopy);

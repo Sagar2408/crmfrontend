@@ -1,5 +1,5 @@
 import axios from "axios";
-const API_BASE_URL = "https://crmbackend-yho0.onrender.com/api";
+const API_BASE_URL = "https://crm-backend-production-c208.up.railway.app/api";
 
 const apiService = axios.create({
   baseURL: API_BASE_URL,
@@ -19,7 +19,7 @@ apiService.interceptors.request.use(
       delete config.headers.Authorization; // Remove malformed header
     }    
     // 🔥 Add x-company-id (hardcoded or from localStorage)
-    config.headers["x-company-id"] = "ab-cd"; // Hardcoded
+    config.headers["x-company-id"] = "0aa80c0b-0999-4d79-8980-e945b4ea700d"; // Hardcoded
     // Or use:
     // config.headers["x-company-id"] = localStorage.getItem("Company-Id") || "1";
 
@@ -61,6 +61,16 @@ export const fetchAssignedLeads = async (executiveName) => {
     return response.data.leads;
   } catch (error) {
     console.error("❌ Error fetching assigned leads:", error);
+    throw error;
+  }
+};
+// ✅ Function to fetch leads with status "Follow-Up"
+export const fetchFollowUpLeadsAPI = async () => {
+  try {
+    const response = await apiService.get("/client-leads/followup-leads");
+    return response.data.leads || []; // Assuming you're using only the leads array
+  } catch (error) {
+    console.error("❌ Error fetching follow-up leads:", error);
     throw error;
   }
 };
@@ -221,38 +231,7 @@ export const fetchLeadSectionVisits = async (executiveId) => {
     throw error;
   }
 };
-// ✅ Fetch fresh leads count for the executive
-export const fetchFreshLeadsCount = async () => {
-  try {
-    const response = await apiService.get("/executive-dashboard");
-    return response.data.data.freshLeads;
-  } catch (error) {
-    console.error("❌ Error fetching fresh leads count:", error);
-    throw error;
-  }
-};
 
-// ✅ Fetch follow-up count for the executive
-export const fetchFollowUpCount = async () => {
-  try {
-    const response = await apiService.get("/executive-dashboard/followupstats");
-    return response.data.data.followUps;
-  } catch (error) {
-    console.error("❌ Error fetching follow-up count:", error);
-    throw error;
-  }
-};
-
-// ✅ Fetch converted clients count for the executive
-export const fetchConvertedClientsCount = async () => {
-  try {
-    const response = await apiService.get("/executive-dashboard/converted");
-    return response.data.data.convertedClients;
-  } catch (error) {
-    console.error("❌ Error fetching converted clients count:", error);
-    throw error;
-  }
-};
 // ✅ Create a new lead
 export const createLeadAPI = async (leadData) => {
   try {
@@ -404,8 +383,7 @@ export const updateUserSettings = async (updatedSettings) => {
 export const fetchMeetings = async () => {
   try {
     const response = await apiService.get("/meetings/exec");
-    console.log("⚡ FULL response:", response.data);
-    return response.data.data; // 👈 access `data` inside `data`
+    return response.data.data; 
   } catch (error) {
     console.error("❌ Error fetching meetings:", error.response?.data || error.message);
     throw error;
@@ -425,11 +403,16 @@ export const createConvertedClient = async (convertedData) => {
     throw error;
   }
 };
+//fetch Converted clients
 
-export const fetchConvertedClients = async () => {
+// Fetch converted clients dynamically based on executiveId or username
+export const fetchConvertedClients = async (executiveId = null) => {
   try {
-    const response = await apiService.get('/converted/exec'); 
-    return response.data; 
+    const endpoint = executiveId ? '/converted/exec' : '/converted';
+    const response = await apiService.get(endpoint, {
+      headers: executiveId ? { 'x-executive-id': executiveId } : {},
+    });
+    return response.data;
   } catch (error) {
     console.error("Error fetching converted clients:", error.response?.data || error.message);
     throw error;
@@ -488,13 +471,36 @@ export const fetchAdminExecutiveDashboard = async () => {
 // ✅ Fetch revenue chart data
 export const fetchRevenueChartData = async () => {
   try {
-    const response = await apiService.get("/revenuechart/revenue-data");
+    const response = await apiService.get("/revenue/revenue-data");
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching revenue chart data:", error);
     throw error;
   }
 };
+export const fetchDealFunnelData = async () => {
+  try {
+    const response = await apiService.get("/client-leads/dealfunnel");
+    return response.data.data; // Returns { statusCounts, totalLeads }
+  } catch (error) {
+    console.error("❌ Error fetching deal funnel data:", error);
+    throw error;
+  }
+};
+//Reassigned Leads 
+export const reassignLead = async (clientLeadId, newExecutive) => {
+  try {
+    const response = await apiService.put(`leads/reassign`, {
+      clientLeadId: Number(clientLeadId),
+      newExecutive,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error in reassignLead API:", error);
+    throw error;
+  }
+};
+
 // Function to fetch all opportunities
 export const fetchOpportunities = async () => {
   try {
@@ -502,6 +508,88 @@ export const fetchOpportunities = async () => {
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching opportunities:", error);
+    throw error;
+  }
+};
+export const verifyNumber = async (number) => {
+  try {
+    const cleanedNumber = number.replace(/\D/g, "");
+    const response = await apiService.get(`/get-name?number1=${cleanedNumber}`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error verifying number:", error);
+    throw error;
+  }
+};
+// ✅ Update a meeting by ID
+export const updateMeeting = async (meetingId, updatedData) => {
+  try {
+    const response = await apiService.put(
+      `/meetings/${meetingId}`,
+      updatedData
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `❌ Error updating meeting ID ${meetingId}:`,
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+// New function to update ClientLead status
+export const updateClientLeadStatus = async (leadId, status) => {
+  try {
+    const response = await apiService.put("/freshleads/update-clientlead", {
+      leadId,
+      status,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating ClientLead status:", error);
+    throw error;
+  }
+};
+//EOD Report
+export const sendEodReport = async ({ email, content }) => {
+  try {
+    const response = await apiService.post("/report", { email, content });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error sending EOD report:", error);
+    throw error;
+  }
+};
+export const createExecutiveAPI = async (executiveData) => {
+  const response = await apiService.post("/create-exec", executiveData, {
+  
+  });
+  return response.data;
+};
+export const fetchAllClientLeads = async () => {
+  try {
+    const response = await apiService.get("/client-leads/getAllClientLeads");
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error fetching all executive activities:", error);
+    throw error;
+  }
+};
+export const createTeamLeadApi = async (adminData) => {
+  try {
+    const response = await apiService.post("/create-tl",adminData);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error ", error);
+    throw error;
+  }
+};
+export const createAdminApi = async (adminData) => {
+  try {
+    const response = await apiService.post("/create-admin",adminData);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error ", error);
     throw error;
   }
 };

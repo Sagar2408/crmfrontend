@@ -1,65 +1,61 @@
 import React, { useEffect, useState } from "react";
-import { Line } from "react-chartjs-2";
+import { Line, Bar } from "react-chartjs-2";
 import "chart.js/auto";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import { useApi } from "../../context/ApiContext";
 
 const LeadGraph = ({ selectedExecutiveId, executiveName }) => {
   const { fetchExecutiveDashboardData } = useApi();
   const [chartData, setChartData] = useState({
     weeklyData: [0, 0, 0, 0, 0, 0, 0],
-    totalVisits: 0
+    totalVisits: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [chartType, setChartType] = useState("line");
+
+  const isDarkMode = document.documentElement.getAttribute("data-theme") === "dark";
+
+  const getTodayIndex = () => {
+    const jsDay = new Date().getDay();
+    return jsDay === 0 ? 6 : jsDay - 1;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!selectedExecutiveId) return;
-      
       setLoading(true);
       try {
-        // Fetch all executive activities
         const allActivities = await fetchExecutiveDashboardData();
-        console.log("All executive activities:", allActivities);
-        
-        // Find the activity for the selected executive
-        const executiveActivity = allActivities.find(
-          (activity) => activity.ExecutiveId === selectedExecutiveId
-        );
-        
-        console.log("Selected executive activity:", executiveActivity);
-        
-        if (executiveActivity && executiveActivity.leadSectionVisits) {
-          // For now we're just setting all visits to Monday
-          // In a real implementation, you would distribute these across the week
-          const weeklyData = [
-            executiveActivity.leadSectionVisits || 0, // Monday
-            0, // Tuesday
-            0, // Wednesday
-            0, // Thursday
-            0, // Friday
-            0, // Saturday
-            0, // Sunday
-          ];
-          
-          const totalVisits = weeklyData.reduce((sum, visits) => sum + visits, 0);
-          
-          setChartData({
-            weeklyData,
-            totalVisits
-          });
+        const todayIndex = getTodayIndex();
+        const updatedWeeklyData = [0, 0, 0, 0, 0, 0, 0];
+        let totalVisits = 0;
+
+        if (selectedExecutiveId) {
+          const executiveActivity = allActivities.find(
+            (activity) => activity.ExecutiveId === selectedExecutiveId
+          );
+
+          if (executiveActivity?.leadSectionVisits > 0) {
+            updatedWeeklyData[todayIndex] = executiveActivity.leadSectionVisits;
+          }
+          totalVisits = updatedWeeklyData.reduce((sum, visits) => sum + visits, 0);
         } else {
-          // Reset to zero if no data found
-          setChartData({
-            weeklyData: [0, 0, 0, 0, 0, 0, 0],
-            totalVisits: 0
+          allActivities.forEach((activity) => {
+            if (activity?.leadSectionVisits > 0) {
+              updatedWeeklyData[todayIndex] += activity.leadSectionVisits;
+            }
           });
+          totalVisits = updatedWeeklyData.reduce((sum, visits) => sum + visits, 0);
         }
+
+        setChartData({
+          weeklyData: updatedWeeklyData.map((v) => Math.max(0, v)),
+          totalVisits,
+        });
       } catch (err) {
         console.error("Error loading lead visits:", err);
-        // Reset on error
         setChartData({
           weeklyData: [0, 0, 0, 0, 0, 0, 0],
-          totalVisits: 0
+          totalVisits: 0,
         });
       } finally {
         setLoading(false);
@@ -69,28 +65,24 @@ const LeadGraph = ({ selectedExecutiveId, executiveName }) => {
     fetchData();
   }, [selectedExecutiveId]);
 
-  const data = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    datasets: [
-      {
-        label: "Actual Visits",
-        data: chartData.weeklyData,
-        borderColor: "#8b5cf6",
-        backgroundColor: "rgba(139, 92, 246, 0.2)",
-        tension: 0.4,
-      },
-      {
-        label: "Target Visits",
-        data: [12, 20, 17, 28, 20, 35, 27],
-        borderColor: "#facc15",
-        backgroundColor: "rgba(250, 204, 21, 0.2)",
-        tension: 0.4,
-      },
-    ],
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const maxLead = Math.max(...chartData.weeklyData);
+  const dynamicMax = Math.max(70, Math.ceil((maxLead + 10) / 10) * 10);
+
+  const baseDataset = {
+    label: "Lead Visits",
+    data: chartData.weeklyData,
+    borderColor: "#8b5cf6",
+    backgroundColor: "rgba(139, 92, 246, 0.3)",
+    tension: 0.4,
+    pointRadius: 3,
+    pointHoverRadius: 5,
+    borderWidth: 2,
   };
 
-  const options = {
+  const commonOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -98,34 +90,94 @@ const LeadGraph = ({ selectedExecutiveId, executiveName }) => {
           label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} Visits`,
         },
       },
+      datalabels: {
+        color: isDarkMode ? "#ffffff" : "#000000",
+        font: { size: 10, weight: "bold" },
+        anchor: "end",
+        align: "top",
+        formatter: (value) => value,
+      },
     },
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: "#a1a1aa", font: { size: 12 } },
+        ticks: {
+          color: isDarkMode ? "#ffffff" : "#333",
+          font: { size: 16, weight: "500" },
+        },
       },
       y: {
-        grid: { color: "rgba(255,255,255,0.1)" },
-        ticks: { color: "#a1a1aa", font: { size: 12 } },
+        beginAtZero: true,
+        min: 0,
+        max: dynamicMax,
+        ticks: {
+          stepSize: 10,
+          color: isDarkMode ? "#ffffff" : "#333",
+          font: { size: 10, weight: "500" },
+        },
+        grid: {
+          color: getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim() || "#e5e7eb",
+        },
       },
     },
   };
 
   return (
-    <div className="lead-sec-graph">
-      <h2 className="exec-section-title">
-        <span>Lead Visit</span>
-        <span className="executive-name">{executiveName || "Select an Executive"}</span>
-      </h2>
+    <div className="lead-graph-container">
+      <div className="lead-graph-header">
+        <h2 className="lead-graph-title">
+          Lead Visit:{" "}
+          <span
+            className={
+              loading
+                ? "lead-graph-loading"
+                : executiveName
+                ? "lead-graph-executive-name"
+                : "lead-graph-placeholder-name"
+            }
+          >
+            {executiveName || "Loading..."}
+          </span>
+        </h2>
 
-      <div className="mb-4 text-sm text-gray-400">
-        Total Visits This Week (from dashboard):{" "}
-        <span className="text-white font-medium">
-          {loading ? "Loading..." : chartData.totalVisits}
-        </span>
+        <button
+          onClick={() => setChartType((prev) => (prev === "line" ? "bar" : "line"))}
+          className="lead-graph-button"
+        >
+          Switch to {chartType === "line" ? "Bar" : "Line"} Graph
+        </button>
       </div>
 
-      <Line data={data} options={options} />
+      <div className="lead-graph-summary">
+        Total Visits This Week (from dashboard):{" "}
+        <span>{loading ? "Loading..." : chartData.totalVisits}</span>
+      </div>
+
+      <div style={{ height: "77%" }}>
+        {chartType === "line" ? (
+          <Line
+            data={{ labels, datasets: [baseDataset] }}
+            options={commonOptions}
+            plugins={[ChartDataLabels]}
+          />
+        ) : (
+          <Bar
+            data={{
+              labels,
+              datasets: [
+                {
+                  ...baseDataset,
+                  backgroundColor: "#8b5cf6",
+                  borderRadius: 4,
+                  borderWidth: 0,
+                },
+              ],
+            }}
+            options={commonOptions}
+            plugins={[ChartDataLabels]}
+          />
+        )}
+      </div>
     </div>
   );
 };
