@@ -91,6 +91,7 @@ const Chat = ({ isCallActive }) => {
       const response = await fetch("https://crmbackend-yho0.onrender.com/api/chatbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        'x-company-id': " aba4db75-437f-11f0-a807-a2aaa2e2ab32",
         body: JSON.stringify({ prompt: input }),
       });
       const data = await response.json();
