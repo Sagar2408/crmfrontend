@@ -128,15 +128,24 @@ const Chat = ({ isCallActive }) => {
 
           // Upload to backend
           if (executiveId && executiveName) {
+            const storedClient = JSON.parse(localStorage.getItem("activeClient") || "{}");
+            const clientName = storedClient.name || "Unknown";
+            const clientPhone = storedClient.phone || "0000000000";
+
             const formData = new FormData();
             formData.append("recording", blob);
             formData.append("executiveId", executiveId);
             formData.append("executiveName", executiveName);
             formData.append("duration", recordTime);
+            formData.append("clientName", clientName);
+            formData.append("clientPhone", clientPhone);
 
             try {
-              const res = await fetch("https://crmbackend-yho0.onrender.com/api/upload-recording", {
+              const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
                 method: "POST",
+                headers:{
+                  Authorization: `Bearer ${token}`,
+                },
                 body: formData,
               });
               const data = await res.json();

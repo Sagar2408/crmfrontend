@@ -255,6 +255,10 @@ function FreshLead() {
                             <button
                               className="popover-option"
                               onClick={() => {
+                                localStorage.setItem("activeClient", JSON.stringify({
+                                 name: lead.name,
+                                 phone: lead.phone
+                                }));
                                 const cleaned = lead.phone.replace(/[^\d]/g, "");
                                 window.open(`https://wa.me/91${cleaned}`, "_blank");
                                 setActivePopoverIndex(null);
