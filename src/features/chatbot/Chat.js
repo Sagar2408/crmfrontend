@@ -131,6 +131,10 @@ const Chat = ({ isCallActive }) => {
             const storedClient = JSON.parse(localStorage.getItem("activeClient") || "{}");
             const clientName = storedClient.name || "Unknown";
             const clientPhone = storedClient.phone || "0000000000";
+            const now = new Date();
+            const callEndTime = now.toISOString();
+            const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
+
 
             const formData = new FormData();
             formData.append("recording", blob);
@@ -139,6 +143,8 @@ const Chat = ({ isCallActive }) => {
             formData.append("duration", recordTime);
             formData.append("clientName", clientName);
             formData.append("clientPhone", clientPhone);
+            formData.append("callStartTime", callStartTime);
+            formData.append("callEndTime", callEndTime);
 
             try {
               const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
