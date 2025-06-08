@@ -90,8 +90,10 @@ const Chat = ({ isCallActive }) => {
     try {
       const response = await fetch("https://crmbackend-yho0.onrender.com/api/chatbot", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        'x-company-id': " aba4db75-437f-11f0-a807-a2aaa2e2ab32",
+        headers: {
+          "Content-Type": "application/json",
+          "x-company-id": "aba4db75-437f-11f0-a807-a2aaa2e2ab32"
+        },
         body: JSON.stringify({ prompt: input }),
       });
       const data = await response.json();
@@ -118,7 +120,6 @@ const Chat = ({ isCallActive }) => {
         mediaRecorderRef.current.onstop = async () => {
           const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
 
-          // OPTIONAL: Local download
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
@@ -126,7 +127,6 @@ const Chat = ({ isCallActive }) => {
           a.click();
           URL.revokeObjectURL(url);
 
-          // Upload to backend
           if (executiveId && executiveName) {
             const storedClient = JSON.parse(localStorage.getItem("activeClient") || "{}");
             const clientName = storedClient.name || "Unknown";
@@ -134,7 +134,6 @@ const Chat = ({ isCallActive }) => {
             const now = new Date();
             const callEndTime = now.toISOString();
             const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
-
 
             const formData = new FormData();
             formData.append("recording", blob);
@@ -147,15 +146,14 @@ const Chat = ({ isCallActive }) => {
             formData.append("callEndTime", callEndTime);
 
             try {
-              const response = await fetch("https://crmbackend-yho0.onrender.com/api/chatbot", {
-              method: "POST",
-               headers: {
-               "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-               "x-company-id": "aba4db75-437f-11f0-a807-a2aaa2e2ab32"
-                     },
-                     body: JSON.stringify({ prompt: input })
-                  });
+              const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "x-company-id": "aba4db75-437f-11f0-a807-a2aaa2e2ab32"
+                },
+                body: formData
+              });
 
               const data = await res.json();
               console.log("✅ Uploaded to backend:", data);
