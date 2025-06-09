@@ -4,7 +4,6 @@ import { MdSmartToy } from "react-icons/md";
 import { BsRecordCircle } from "react-icons/bs";
 import { jwtDecode } from "jwt-decode";
 
-// Extract token from URL
 const token = new URLSearchParams(window.location.search).get("token");
 
 let executiveId = null;
@@ -92,7 +91,7 @@ const Chat = ({ isCallActive }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-company-id": "aba4db75-437f-11f0-a807-a2aaa2e2ab32"
+          "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119"
         },
         body: JSON.stringify({ prompt: input }),
       });
@@ -120,10 +119,13 @@ const Chat = ({ isCallActive }) => {
         mediaRecorderRef.current.onstop = async () => {
           const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
 
+          const fileName = `call_recording_${Date.now()}.webm`;
+          const filePath = `C:/Users/${executiveName}/Downloads/${fileName}`;
+
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `call_recording_${Date.now()}.webm`;
+          a.download = fileName;
           a.click();
           URL.revokeObjectURL(url);
 
@@ -136,7 +138,6 @@ const Chat = ({ isCallActive }) => {
             const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
 
             const formData = new FormData();
-            formData.append("recording", blob);
             formData.append("executiveId", executiveId);
             formData.append("executiveName", executiveName);
             formData.append("duration", recordTime);
@@ -144,6 +145,7 @@ const Chat = ({ isCallActive }) => {
             formData.append("clientPhone", clientPhone);
             formData.append("callStartTime", callStartTime);
             formData.append("callEndTime", callEndTime);
+            formData.append("recordingPath", filePath); // ✅ send only the string path
 
             try {
               const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
