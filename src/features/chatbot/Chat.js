@@ -1,10 +1,11 @@
+// --- NO CHANGE REQUIRED IN IMPORTS ---
 import React, { useState, useEffect, useRef } from "react";
 import { FaMicrophone, FaPaperPlane, FaUser, FaStopCircle } from "react-icons/fa";
 import { MdSmartToy } from "react-icons/md";
 import { BsRecordCircle } from "react-icons/bs";
 import { jwtDecode } from "jwt-decode";
 
-// Extract token from URL
+// Token from URL
 const token = new URLSearchParams(window.location.search).get("token");
 
 let executiveId = null;
@@ -40,46 +41,6 @@ const Chat = ({ isCallActive }) => {
   useEffect(() => {
     chatContainerRef.current?.scrollTo(0, chatContainerRef.current.scrollHeight);
   }, [messages]);
-
-  const handleMicClick = () => {
-    if (isListening) stopSpeechRecognition();
-    else startSpeechRecognition();
-  };
-
-  const startSpeechRecognition = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser.");
-      return;
-    }
-
-    recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.continuous = true;
-    recognitionRef.current.interimResults = true;
-    recognitionRef.current.lang = "en-US";
-
-    recognitionRef.current.onstart = () => setIsListening(true);
-    recognitionRef.current.onresult = (event) => {
-      let transcript = event.results[event.results.length - 1][0].transcript.trim();
-      setUserInput(transcript);
-      if (event.results[event.results.length - 1].isFinal) handleSend(transcript);
-    };
-    recognitionRef.current.onerror = (event) => console.error("Speech recognition error:", event.error);
-    recognitionRef.current.onend = () => {
-      if (!isCallActive && isListening) recognitionRef.current.start();
-    };
-
-    recognitionRef.current.start();
-  };
-
-  const stopSpeechRecognition = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current.onend = null;
-      recognitionRef.current = null;
-    }
-    setIsListening(false);
-  };
 
   const handleSend = async (input) => {
     if (!input.trim()) return;
@@ -119,11 +80,10 @@ const Chat = ({ isCallActive }) => {
 
         mediaRecorderRef.current.onstop = async () => {
           const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
-
           const fileName = `call_recording_${Date.now()}.webm`;
           const fakePath = `C:/Users/${executiveName}/Downloads/${fileName}`;
 
-          // Trigger download
+          // Download
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
@@ -131,6 +91,7 @@ const Chat = ({ isCallActive }) => {
           a.click();
           URL.revokeObjectURL(url);
 
+          // 📤 Send metadata
           if (executiveId && executiveName) {
             const storedClient = JSON.parse(localStorage.getItem("activeClient") || "{}");
             const clientName = storedClient.name || "Unknown";
@@ -140,12 +101,13 @@ const Chat = ({ isCallActive }) => {
             const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
 
             const formData = new FormData();
+            formData.append("executiveId", executiveId); // ✅ send it!
             formData.append("duration", recordTime);
             formData.append("clientName", clientName);
             formData.append("clientPhone", clientPhone);
             formData.append("callStartTime", callStartTime);
             formData.append("callEndTime", callEndTime);
-            formData.append("recordingPath", fakePath); // ✅ Only path sent
+            formData.append("recordingPath", fakePath);
 
             try {
               const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
@@ -180,6 +142,40 @@ const Chat = ({ isCallActive }) => {
       setIsRecording(false);
       setRecordTime(0);
     }
+  };
+
+  const handleMicClick = () => {
+    if (isListening) stopSpeechRecognition();
+    else startSpeechRecognition();
+  };
+
+  const startSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return alert("Speech recognition not supported.");
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = true;
+    recognitionRef.current.interimResults = true;
+    recognitionRef.current.lang = "en-US";
+    recognitionRef.current.onstart = () => setIsListening(true);
+    recognitionRef.current.onresult = (event) => {
+      let transcript = event.results[event.results.length - 1][0].transcript.trim();
+      setUserInput(transcript);
+      if (event.results[event.results.length - 1].isFinal) handleSend(transcript);
+    };
+    recognitionRef.current.onerror = (e) => console.error("Speech error:", e.error);
+    recognitionRef.current.onend = () => {
+      if (!isCallActive && isListening) recognitionRef.current.start();
+    };
+    recognitionRef.current.start();
+  };
+
+  const stopSpeechRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current.onend = null;
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
   };
 
   return (
