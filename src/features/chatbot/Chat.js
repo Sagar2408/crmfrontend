@@ -4,6 +4,7 @@ import { MdSmartToy } from "react-icons/md";
 import { BsRecordCircle } from "react-icons/bs";
 import { jwtDecode } from "jwt-decode";
 
+// Extract token from URL
 const token = new URLSearchParams(window.location.search).get("token");
 
 let executiveId = null;
@@ -91,7 +92,7 @@ const Chat = ({ isCallActive }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119"
+          "x-company-id": "aba4db75-437f-11f0-a807-a2aaa2e2ab32"
         },
         body: JSON.stringify({ prompt: input }),
       });
@@ -120,8 +121,9 @@ const Chat = ({ isCallActive }) => {
           const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
 
           const fileName = `call_recording_${Date.now()}.webm`;
-          const filePath = `C:/Users/${executiveName}/Downloads/${fileName}`;
+          const fakePath = `C:/Users/${executiveName}/Downloads/${fileName}`;
 
+          // Trigger download
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
@@ -145,7 +147,7 @@ const Chat = ({ isCallActive }) => {
             formData.append("clientPhone", clientPhone);
             formData.append("callStartTime", callStartTime);
             formData.append("callEndTime", callEndTime);
-            formData.append("recordingPath", filePath); // ✅ send only the string path
+            formData.append("recordingPath", fakePath); // ✅ Only path sent
 
             try {
               const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
