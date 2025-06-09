@@ -140,8 +140,6 @@ const Chat = ({ isCallActive }) => {
             const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
 
             const formData = new FormData();
-            formData.append("executiveId", executiveId);
-            formData.append("executiveName", executiveName);
             formData.append("duration", recordTime);
             formData.append("clientName", clientName);
             formData.append("clientPhone", clientPhone);
