@@ -4,7 +4,7 @@ import axios from 'axios';
 const API_BASE_URL = "https://crmbackend-yho0.onrender.com/api";
 const BASE_HEADERS = {
   "Content-Type": "application/json",
-  "x-company-id": "aba4db75-437f-11f0-a807-a2aaa2e2ab32",
+  "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119",
 };
 
 
@@ -15,7 +15,7 @@ const getHeaders = () => {
 
   return {
     "Content-Type": "application/json",
-    "x-company-id": "0aa80c0b-0999-4d79-8980-e945b4ea700d",
+    "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119",
     Authorization: `Bearer ${token}`,
   };
 };

@@ -150,7 +150,7 @@ const Chat = ({ isCallActive }) => {
                 method: "POST",
                 headers: {
                   Authorization: `Bearer ${token}`,
-                  "x-company-id": "aba4db75-437f-11f0-a807-a2aaa2e2ab32"
+                  "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119"
                 },
                 body: formData
               });
