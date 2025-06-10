@@ -69,24 +69,32 @@ const Chat = ({ isCallActive }) => {
   };
 
   const toggleRecording = async () => {
-    console.log("🎬 toggleRecording triggered. isRecording =", isRecording);
+    console.log("🎬 toggleRecording clicked");
+    console.log("🎙️ isRecording state:", isRecording);
 
     if (!isRecording) {
       try {
+        console.log("🎙️ Requesting mic access...");
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log("✅ Mic permission granted");
+        console.log("🎙️ Stream tracks:", stream.getAudioTracks());
+
         mediaRecorderRef.current = new MediaRecorder(stream);
+        console.log("🆕 MediaRecorder created:", mediaRecorderRef.current);
 
         recordChunksRef.current = [];
 
+        mediaRecorderRef.current.onstart = () => {
+          console.log("▶️ mediaRecorder.start() successfully triggered");
+        };
+
         mediaRecorderRef.current.ondataavailable = (e) => {
-          console.log("📦 ondataavailable fired", e.data.size);
-          if (e.data.size > 0) {
-            recordChunksRef.current.push(e.data);
-          }
+          console.log("📦 ondataavailable fired:", e.data.size);
+          if (e.data.size > 0) recordChunksRef.current.push(e.data);
         };
 
         mediaRecorderRef.current.onstop = async () => {
-          console.log("⏹️ onstop triggered — preparing to upload call metadata...");
+          console.log("⏹️ onstop triggered");
           const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
           const fileName = `call_recording_${Date.now()}.webm`;
           const fakePath = `C:/Users/${executiveName}/Downloads/${fileName}`;
@@ -136,12 +144,12 @@ const Chat = ({ isCallActive }) => {
         };
 
         mediaRecorderRef.current.start();
-        console.log("▶️ Recording started");
         setIsRecording(true);
         setRecordTime(0);
         timerRef.current = setInterval(() => setRecordTime((t) => t + 1), 1000);
       } catch (err) {
-        console.error("❌ Error accessing mic:", err);
+        alert("❌ Microphone access failed");
+        console.error("Mic access error:", err);
       }
     } else {
       console.log("🛑 Stopping recording...");
