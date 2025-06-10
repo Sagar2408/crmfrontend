@@ -5,24 +5,7 @@ import { MdSmartToy } from "react-icons/md";
 import { BsRecordCircle } from "react-icons/bs";
 import { jwtDecode } from "jwt-decode";
 
-// Token from URL
 const token = new URLSearchParams(window.location.search).get("token");
-
-let executiveId = null;
-let executiveName = null;
-
-if (token) {
-  try {
-    const decoded = jwtDecode(token);
-    executiveId = decoded.id;
-    executiveName = decoded.name;
-    console.log("✅ Executive identified:", executiveId, executiveName);
-  } catch (err) {
-    console.error("❌ Invalid token:", err);
-  }
-} else {
-  console.warn("⚠️ No token found in URL");
-}
 
 const Chat = ({ isCallActive }) => {
   const [messages, setMessages] = useState([]);
@@ -31,6 +14,8 @@ const Chat = ({ isCallActive }) => {
   const [isListening, setIsListening] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordTime, setRecordTime] = useState(0);
+  const [executiveId, setExecutiveId] = useState(null);
+  const [executiveName, setExecutiveName] = useState("");
 
   const chatContainerRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -41,6 +26,19 @@ const Chat = ({ isCallActive }) => {
   useEffect(() => {
     chatContainerRef.current?.scrollTo(0, chatContainerRef.current.scrollHeight);
   }, [messages]);
+
+  useEffect(() => {
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        setExecutiveId(decoded.id);
+        setExecutiveName(decoded.name);
+        console.log("✅ Executive decoded:", decoded.id, decoded.name);
+      } catch (err) {
+        console.error("❌ Invalid token:", err);
+      }
+    }
+  }, []);
 
   const handleSend = async (input) => {
     if (!input.trim()) return;
@@ -53,7 +51,7 @@ const Chat = ({ isCallActive }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119"
+          "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119",
         },
         body: JSON.stringify({ prompt: input }),
       });
@@ -74,31 +72,26 @@ const Chat = ({ isCallActive }) => {
 
     if (!isRecording) {
       try {
-        console.log("🎙️ Requesting mic access...");
+        console.log("🎤 Requesting mic access...");
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         console.log("✅ Mic permission granted");
-        console.log("🎙️ Stream tracks:", stream.getAudioTracks());
 
         mediaRecorderRef.current = new MediaRecorder(stream);
-        console.log("🆕 MediaRecorder created:", mediaRecorderRef.current);
-
-        recordChunksRef.current = [];
-
-        mediaRecorderRef.current.onstart = () => {
-          console.log("▶️ mediaRecorder.start() successfully triggered");
-        };
+        console.log("🎥 MediaRecorder created:", mediaRecorderRef.current);
 
         mediaRecorderRef.current.ondataavailable = (e) => {
-          console.log("📦 ondataavailable fired:", e.data.size);
-          if (e.data.size > 0) recordChunksRef.current.push(e.data);
+          if (e.data.size > 0) {
+            recordChunksRef.current.push(e.data);
+            console.log("📦 ondataavailable fired:", e.data.size);
+          }
         };
 
         mediaRecorderRef.current.onstop = async () => {
-          console.log("⏹️ onstop triggered");
+          console.log("🛑 onstop triggered");
+
           const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
           const fileName = `call_recording_${Date.now()}.webm`;
           const fakePath = `C:/Users/${executiveName}/Downloads/${fileName}`;
-
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
@@ -106,55 +99,55 @@ const Chat = ({ isCallActive }) => {
           a.click();
           URL.revokeObjectURL(url);
 
-          if (executiveId && executiveName) {
-            const storedClient = JSON.parse(localStorage.getItem("activeClient") || "{}");
-            const clientName = storedClient.name || "Unknown";
-            const clientPhone = storedClient.phone || "0000000000";
-            const now = new Date();
-            const callEndTime = now.toISOString();
-            const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
-            
-            console.log("📋 Call Metadata Preview:", {
+          const storedClient = JSON.parse(localStorage.getItem("activeClient") || "{}");
+          const clientName = storedClient.name || "Unknown";
+          const clientPhone = storedClient.phone || "0000000000";
+
+          const now = new Date();
+          const callEndTime = now.toISOString();
+          const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
+
+          console.log("📋 Call Metadata Preview:", {
             executiveId,
+            executiveName,
             recordTime,
             clientName,
             clientPhone,
             callStartTime,
             callEndTime,
-            fakePath
-            });
+            fakePath,
+          });
 
-            if (!executiveId || !clientName || !clientPhone) {
+          if (!executiveId || !clientName || !clientPhone) {
             alert("❌ Missing metadata. Please select a client and try again.");
             return;
-            }
+          }
 
-            const formData = new FormData();
-            formData.append("executiveId", executiveId);
-            formData.append("duration", recordTime);
-            formData.append("clientName", clientName);
-            formData.append("clientPhone", clientPhone);
-            formData.append("callStartTime", callStartTime);
-            formData.append("callEndTime", callEndTime);
-            formData.append("recordingPath", fakePath);
+          const formData = new FormData();
+          formData.append("executiveId", executiveId);
+          formData.append("duration", recordTime);
+          formData.append("clientName", clientName);
+          formData.append("clientPhone", clientPhone);
+          formData.append("callStartTime", callStartTime);
+          formData.append("callEndTime", callEndTime);
+          formData.append("recordingPath", fakePath);
 
-            try {
-              const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119"
-                },
-                body: formData
-              });
+          try {
+            const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119",
+              },
+              body: formData,
+            });
 
-              const data = await res.json();
-              console.log("✅ Uploaded to backend:", data);
-            } catch (err) {
-              console.error("❌ Upload failed:", err);
-              if (err instanceof TypeError) {
-                console.warn("📛 Probably CORS or bad endpoint or silent backend rejection");
-              }
+            const data = await res.json();
+            console.log("✅ Uploaded to backend:", data);
+          } catch (err) {
+            console.error("❌ Upload failed:", err);
+            if (err instanceof TypeError) {
+              console.warn("📛 Probably CORS or silent backend rejection");
             }
           }
 
@@ -162,12 +155,13 @@ const Chat = ({ isCallActive }) => {
         };
 
         mediaRecorderRef.current.start();
+        console.log("▶️ mediaRecorder.start() successfully triggered");
+
         setIsRecording(true);
         setRecordTime(0);
         timerRef.current = setInterval(() => setRecordTime((t) => t + 1), 1000);
       } catch (err) {
-        alert("❌ Microphone access failed");
-        console.error("Mic access error:", err);
+        console.error("❌ Mic access error:", err);
       }
     } else {
       console.log("🛑 Stopping recording...");
