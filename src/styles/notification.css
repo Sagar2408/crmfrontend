@@ -108,8 +108,10 @@
 }
 
 .read-checkbox {
-  font-size: 13px;
-  color: #007bff;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .read-checkbox input:checked + span {
@@ -145,6 +147,9 @@
 
 .read-checkbox input {
   margin-right: 4px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
 }
 .notification-message {
   font-size: 14px;
