@@ -69,21 +69,28 @@ const Chat = ({ isCallActive }) => {
   };
 
   const toggleRecording = async () => {
+    console.log("🎬 toggleRecording triggered. isRecording =", isRecording);
+
     if (!isRecording) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorderRef.current = new MediaRecorder(stream);
 
+        recordChunksRef.current = [];
+
         mediaRecorderRef.current.ondataavailable = (e) => {
-          if (e.data.size > 0) recordChunksRef.current.push(e.data);
+          console.log("📦 ondataavailable fired", e.data.size);
+          if (e.data.size > 0) {
+            recordChunksRef.current.push(e.data);
+          }
         };
 
         mediaRecorderRef.current.onstop = async () => {
+          console.log("⏹️ onstop triggered — preparing to upload call metadata...");
           const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
           const fileName = `call_recording_${Date.now()}.webm`;
           const fakePath = `C:/Users/${executiveName}/Downloads/${fileName}`;
 
-          // Download
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
@@ -91,7 +98,6 @@ const Chat = ({ isCallActive }) => {
           a.click();
           URL.revokeObjectURL(url);
 
-          // 📤 Send metadata
           if (executiveId && executiveName) {
             const storedClient = JSON.parse(localStorage.getItem("activeClient") || "{}");
             const clientName = storedClient.name || "Unknown";
@@ -101,7 +107,7 @@ const Chat = ({ isCallActive }) => {
             const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
 
             const formData = new FormData();
-            formData.append("executiveId", executiveId); // ✅ send it!
+            formData.append("executiveId", executiveId);
             formData.append("duration", recordTime);
             formData.append("clientName", clientName);
             formData.append("clientPhone", clientPhone);
@@ -130,13 +136,15 @@ const Chat = ({ isCallActive }) => {
         };
 
         mediaRecorderRef.current.start();
+        console.log("▶️ Recording started");
         setIsRecording(true);
         setRecordTime(0);
         timerRef.current = setInterval(() => setRecordTime((t) => t + 1), 1000);
       } catch (err) {
-        console.error("Error accessing mic:", err);
+        console.error("❌ Error accessing mic:", err);
       }
     } else {
+      console.log("🛑 Stopping recording...");
       mediaRecorderRef.current?.stop();
       clearInterval(timerRef.current);
       setIsRecording(false);
