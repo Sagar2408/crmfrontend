@@ -17,11 +17,13 @@ const Chat = ({ isCallActive }) => {
   const [executiveId, setExecutiveId] = useState(null);
   const [executiveName, setExecutiveName] = useState("");
 
+  const recordStartTimeRef = useRef(null);
   const chatContainerRef = useRef(null);
   const recognitionRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordChunksRef = useRef([]);
   const timerRef = useRef(null);
+  
 
   useEffect(() => {
     chatContainerRef.current?.scrollTo(0, chatContainerRef.current.scrollHeight);
@@ -67,110 +69,111 @@ const Chat = ({ isCallActive }) => {
   };
 
   const toggleRecording = async () => {
-    console.log("🎬 toggleRecording clicked");
-    console.log("🎙️ isRecording state:", isRecording);
+  console.log("🎬 toggleRecording clicked");
+  console.log("🎙️ isRecording state:", isRecording);
 
-    if (!isRecording) {
-      try {
-        console.log("🎤 Requesting mic access...");
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log("✅ Mic permission granted");
+  if (!isRecording) {
+    try {
+      console.log("🎤 Requesting mic access...");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("✅ Mic permission granted");
 
-        mediaRecorderRef.current = new MediaRecorder(stream);
-        console.log("🎥 MediaRecorder created:", mediaRecorderRef.current);
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      recordChunksRef.current = [];
 
-        mediaRecorderRef.current.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            recordChunksRef.current.push(e.data);
-            console.log("📦 ondataavailable fired:", e.data.size);
-          }
-        };
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          recordChunksRef.current.push(e.data);
+          console.log("📦 ondataavailable fired:", e.data.size);
+        }
+      };
 
-        mediaRecorderRef.current.onstop = async () => {
-          console.log("🛑 onstop triggered");
+      mediaRecorderRef.current.onstop = async () => {
+        console.log("🛑 onstop triggered");
 
-          const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
-          const fileName = `call_recording_${Date.now()}.webm`;
-          const fakePath = `C:/Users/${executiveName}/Downloads/${fileName}`;
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = fileName;
-          a.click();
-          URL.revokeObjectURL(url);
+        const blob = new Blob(recordChunksRef.current, { type: "audio/webm" });
+        const fileName = `call_recording_${Date.now()}.webm`;
+        const fakePath = `C:/Users/${executiveName}/Downloads/${fileName}`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
 
-          const storedClient = JSON.parse(localStorage.getItem("activeClient") || "{}");
-          const clientName = storedClient.name || "Unknown";
-          const clientPhone = storedClient.phone || "0000000000";
+        const storedClient = JSON.parse(localStorage.getItem("activeClient") || "{}");
+        const clientName = storedClient.name || "Unknown";
+        const clientPhone = storedClient.phone || "0000000000";
 
-          const now = new Date();
-          const callEndTime = now.toISOString();
-          const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
+        const callStartTime = recordStartTimeRef.current?.toISOString() || new Date().toISOString();
+        const callEndTime = new Date().toISOString();
+        const duration = Math.floor((new Date(callEndTime) - new Date(callStartTime)) / 1000);
 
-          console.log("📋 Call Metadata Preview:", {
-            executiveId,
-            executiveName,
-            recordTime,
-            clientName,
-            clientPhone,
-            callStartTime,
-            callEndTime,
-            fakePath,
+        console.log("📋 Call Metadata Preview:", {
+          executiveId,
+          executiveName,
+          duration,
+          clientName,
+          clientPhone,
+          callStartTime,
+          callEndTime,
+          fakePath,
+        });
+
+        if (!executiveId || !clientName || !clientPhone) {
+          alert("❌ Missing metadata. Please select a client and try again.");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("executiveId", executiveId);
+        formData.append("duration", duration);
+        formData.append("clientName", clientName);
+        formData.append("clientPhone", clientPhone);
+        formData.append("callStartTime", callStartTime);
+        formData.append("callEndTime", callEndTime);
+        formData.append("recordingPath", fakePath);
+
+        try {
+          const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119",
+            },
+            body: formData,
           });
 
-          if (!executiveId || !clientName || !clientPhone) {
-            alert("❌ Missing metadata. Please select a client and try again.");
-            return;
+          const data = await res.json();
+          console.log("✅ Uploaded to backend:", data);
+        } catch (err) {
+          console.error("❌ Upload failed:", err);
+          if (err instanceof TypeError) {
+            console.warn("📛 Probably CORS or silent backend rejection");
           }
+        }
 
-          const formData = new FormData();
-          formData.append("executiveId", executiveId);
-          formData.append("duration", recordTime);
-          formData.append("clientName", clientName);
-          formData.append("clientPhone", clientPhone);
-          formData.append("callStartTime", callStartTime);
-          formData.append("callEndTime", callEndTime);
-          formData.append("recordingPath", fakePath);
+        recordChunksRef.current = [];
+      };
 
-          try {
-            const res = await fetch("https://crmbackend-yho0.onrender.com/api/calldetails", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "x-company-id": "f515cb0e-450f-11f0-bcd7-a2aa1a8f1119",
-              },
-              body: formData,
-            });
+      mediaRecorderRef.current.start();
+      console.log("▶️ mediaRecorder.start() successfully triggered");
 
-            const data = await res.json();
-            console.log("✅ Uploaded to backend:", data);
-          } catch (err) {
-            console.error("❌ Upload failed:", err);
-            if (err instanceof TypeError) {
-              console.warn("📛 Probably CORS or silent backend rejection");
-            }
-          }
-
-          recordChunksRef.current = [];
-        };
-
-        mediaRecorderRef.current.start();
-        console.log("▶️ mediaRecorder.start() successfully triggered");
-
-        setIsRecording(true);
-        setRecordTime(0);
-        timerRef.current = setInterval(() => setRecordTime((t) => t + 1), 1000);
-      } catch (err) {
-        console.error("❌ Mic access error:", err);
-      }
-    } else {
-      console.log("🛑 Stopping recording...");
-      mediaRecorderRef.current?.stop();
-      clearInterval(timerRef.current);
-      setIsRecording(false);
+      recordStartTimeRef.current = new Date(); // ✅ Capture accurate start time
+      setIsRecording(true);
       setRecordTime(0);
+      timerRef.current = setInterval(() => setRecordTime((t) => t + 1), 1000);
+    } catch (err) {
+      console.error("❌ Mic access error:", err);
     }
-  };
+  } else {
+    console.log("🛑 Stopping recording...");
+    mediaRecorderRef.current?.stop();
+    clearInterval(timerRef.current);
+    setIsRecording(false);
+    setRecordTime(0);
+  }
+};
 
   const handleMicClick = () => {
     if (isListening) stopSpeechRecognition();
