@@ -152,6 +152,9 @@ const Chat = ({ isCallActive }) => {
               console.log("✅ Uploaded to backend:", data);
             } catch (err) {
               console.error("❌ Upload failed:", err);
+              if (err instanceof TypeError) {
+                console.warn("📛 Probably CORS or bad endpoint or silent backend rejection");
+              }
             }
           }
 
