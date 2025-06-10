@@ -113,6 +113,21 @@ const Chat = ({ isCallActive }) => {
             const now = new Date();
             const callEndTime = now.toISOString();
             const callStartTime = new Date(now.getTime() - recordTime * 1000).toISOString();
+            
+            console.log("📋 Call Metadata Preview:", {
+            executiveId,
+            recordTime,
+            clientName,
+            clientPhone,
+            callStartTime,
+            callEndTime,
+            fakePath
+            });
+
+            if (!executiveId || !clientName || !clientPhone) {
+            alert("❌ Missing metadata. Please select a client and try again.");
+            return;
+            }
 
             const formData = new FormData();
             formData.append("executiveId", executiveId);
