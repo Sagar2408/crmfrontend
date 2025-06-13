@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useApi } from "../../context/ApiContext";
 import { BeepSettingsContext } from "../../context/BeepSettingsContext";
 import "../../styles/notification.css";
@@ -11,11 +11,11 @@ function Notification() {
     markNotificationReadAPI,
   } = useApi();
 
-  const { settings, setSettings } = React.useContext(BeepSettingsContext);  // ✅ FIXED LINE
-
+  const { settings, setSettings } = useContext(BeepSettingsContext);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const [readIds, setReadIds] = useState(new Set());
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (user) {
@@ -23,7 +23,7 @@ function Notification() {
     }
   }, [fetchNotifications]);
 
-  // Group lead assignment notifications
+  // ---- GROUPING LEADS ----
   const groupedLeadAssignments = [];
   const otherNotifications = [];
 
@@ -78,27 +78,31 @@ function Notification() {
     currentPage * itemsPerPage
   );
 
- const handleMarkAsRead = (notification) => {
-  const newReadIds = new Set(readIds);
+  // ✅ FINAL FIXED MARK AS READ FUNCTION
+  const handleMarkAsRead = (notification) => {
+    const newReadIds = new Set(readIds);
 
-  if (notification.type === "grouped-leads") {
-    // 👇 Single API call for all originalIds
-    markNotificationReadAPI(notification.originalIds);
+    if (notification.type === "grouped-leads") {
+      console.log("Marking grouped IDs:", notification.originalIds);
+      markNotificationReadAPI(notification.originalIds);
+      notification.originalIds.forEach((id) => newReadIds.add(id));
+    } else {
+      markNotificationReadAPI([notification.id]);
+      newReadIds.add(notification.id);
+    }
 
-    notification.originalIds.forEach((id) => newReadIds.add(id));
+    // ✅ Force UI update
     notification.is_read = true;
-  } else {
-    markNotificationReadAPI([notification.id]);
-    newReadIds.add(notification.id);
-    notification.is_read = true;
-  }
+    setReadIds(new Set([...newReadIds]));
 
-  // 👇 Beep band karo
-  if (settings.enabled) {
-    setSettings({ ...settings, enabled: false });
-  }
+    // ✅ Disable beep and re-enable after delay
+    if (settings.enabled) {
+      setSettings({ ...settings, enabled: false });
 
-  setReadIds(newReadIds);
+      setTimeout(() => {
+        setSettings((prev) => ({ ...prev, enabled: true }));
+      }, 10000); // Re-enable beep after 10s
+    }
   };
 
   const handlePrevPage = () => {
@@ -151,7 +155,7 @@ function Notification() {
 
                   {isGrouped ? (
                     <p style={{ fontWeight: "bold", color: "#6b7280" }}>
-                      Count:{n.count}
+                      Count: {n.count}
                     </p>
                   ) : (
                     <p className="notification-message">{messageBody?.trim()}</p>
