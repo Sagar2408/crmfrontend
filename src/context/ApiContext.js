@@ -4,11 +4,15 @@ import * as upload from "../services/fileUpload";
 import { useCallback } from "react";
 import * as executiveService from "../services/executiveService";
 
-const [unreadCount, setUnreadCount] = useState(0); // ✅ NEW
 
 const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
+  const [unreadCount, setUnreadCount] = useState(0); // ✅ NEW
+
+  const [verificationResults, setVerificationResults] = useState({});
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  
   const [executiveInfo, setExecutiveInfo] = useState(null);
   const [executiveLoading, setExecutiveLoading] = useState(false);
 
@@ -169,11 +173,7 @@ export const ApiProvider = ({ children }) => {
   // ✅ Notifications
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
-  const unreadCount = useMemo(
-    () => notifications.filter(n => !n.is_read).length,
-    [notifications]
-  );
- const fetchNotifications = useCallback(async ({ userId, userRole }) => {
+  const fetchNotifications = useCallback(async ({ userId, userRole }) => {
   if (!userId || !userRole) return;
 
   setNotificationsLoading(true);
@@ -575,8 +575,7 @@ const updateUserLoginStatus = async (userId, canLogin) => {
     throw error;
     }
   };
-const [verificationResults, setVerificationResults] = useState({});
-const [verificationLoading, setVerificationLoading] = useState(false);
+
 
 const verifyNumberAPI = async (index, phone) => {
   setVerificationLoading(true);
@@ -841,7 +840,6 @@ const createAdmin = async (adminData) => {
         // ✅ Notifications
         notifications,
         notificationsLoading,
-        unreadCount,
         unreadCount,
         fetchNotifications,
         createCopyNotification,
