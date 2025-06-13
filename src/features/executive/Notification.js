@@ -11,6 +11,8 @@ function Notification() {
     markNotificationReadAPI,
   } = useApi();
 
+  const { settings, setSettings } = React.useContext(BeepSettingsContext);  // ✅ FIXED LINE
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const [readIds, setReadIds] = useState(new Set());
