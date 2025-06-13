@@ -4,6 +4,8 @@ import * as upload from "../services/fileUpload";
 import { useCallback } from "react";
 import * as executiveService from "../services/executiveService";
 
+const [unreadCount, setUnreadCount] = useState(0); // ✅ NEW
+
 const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
@@ -171,27 +173,20 @@ export const ApiProvider = ({ children }) => {
     () => notifications.filter(n => !n.is_read).length,
     [notifications]
   );
-  const fetchNotifications = useCallback(async ({ userId, userRole }) => {
-    if (!userId || !userRole) {
-      console.warn(
-        "⚠️ User ID and User Role is required to fetch notifications"
-      );
-      return;
-    }
+ const fetchNotifications = useCallback(async ({ userId, userRole }) => {
+  if (!userId || !userRole) return;
 
-    setNotificationsLoading(true);
-    try {
-      const data = await apiService.fetchNotificationsByUser({
-        userId,
-        userRole,
-      });
-      setNotifications(data || []);
-    } catch (error) {
-      console.error("❌ Error fetching notifications:", error);
-    } finally {
-      setNotificationsLoading(false);
-    }
-  }, []);
+  setNotificationsLoading(true);
+  try {
+    const data = await apiService.fetchNotificationsByUser({ userId, userRole });
+    setNotifications(data?.notifications || []);
+    setUnreadCount(data?.pagination?.unreadCount || 0); // ✅ NEW count from backend
+  } catch (error) {
+    console.error("❌ Error fetching notifications:", error);
+  } finally {
+    setNotificationsLoading(false);
+  }
+}, []);
 
   const createCopyNotification = async (userId, userRole, message) => {
     try {
@@ -846,6 +841,7 @@ const createAdmin = async (adminData) => {
         // ✅ Notifications
         notifications,
         notificationsLoading,
+        unreadCount,
         unreadCount,
         fetchNotifications,
         createCopyNotification,
