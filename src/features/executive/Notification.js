@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useApi } from "../../context/ApiContext";
+import { BeepSettingsContext } from "../../context/beepsetting";
 import "../../styles/notification.css";
 
 function Notification() {
