@@ -75,24 +75,27 @@ function Notification() {
     currentPage * itemsPerPage
   );
 
-  const handleMarkAsRead = (notification) => {
-    const newReadIds = new Set(readIds);
-  
-    if (notification.type === "grouped-leads") {
-      notification.originalIds.forEach((id) => {
-        if (!newReadIds.has(id)) {
-          markNotificationReadAPI(id);
-          newReadIds.add(id);
-        }
-      });
-    } else {
-      if (!newReadIds.has(notification.id)) {
-        markNotificationReadAPI(notification.id);
-        newReadIds.add(notification.id);
-      }
-    }
-  
-    setReadIds(newReadIds);
+ const handleMarkAsRead = (notification) => {
+  const newReadIds = new Set(readIds);
+
+  if (notification.type === "grouped-leads") {
+    // 👇 Single API call for all originalIds
+    markNotificationReadAPI(notification.originalIds);
+
+    notification.originalIds.forEach((id) => newReadIds.add(id));
+    notification.is_read = true;
+  } else {
+    markNotificationReadAPI([notification.id]);
+    newReadIds.add(notification.id);
+    notification.is_read = true;
+  }
+
+  // 👇 Beep band karo
+  if (settings.enabled) {
+    setSettings({ ...settings, enabled: false });
+  }
+
+  setReadIds(newReadIds);
   };
 
   const handlePrevPage = () => {
